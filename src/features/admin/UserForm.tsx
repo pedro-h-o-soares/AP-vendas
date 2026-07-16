@@ -3,7 +3,16 @@ import { FormField } from "../../components/FormField";
 import type { Role, UserProfile } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
 
-export function UserForm({ user, onSaved }: { user?: UserProfile; onSaved?: () => void }) {
+interface UserFormProps {
+  user?: UserProfile;
+  onSaved?: () => void;
+}
+
+export function UserForm(props: UserFormProps) {
+  return <UserFormFields key={props.user?.id ?? "new-user"} {...props} />;
+}
+
+function UserFormFields({ user, onSaved }: UserFormProps) {
   const { createUser, updateUser } = usePrototypeStore();
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");

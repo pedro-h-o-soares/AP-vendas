@@ -1,5 +1,7 @@
 import { usePrototypeStore } from "../../state/PrototypeStore";
 import { formatLocalPeriod } from "../../domain/localDate";
+import { DataTable, type DataTableColumn } from "../../components/DataTable";
+import type { SettlementEntry } from "../../domain/types";
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const percent = new Intl.NumberFormat("pt-BR", { style: "percent", minimumFractionDigits: 1 });
@@ -28,9 +30,16 @@ export function SettlementDetail({ settlementId }: { settlementId: string }) {
     ["Desconto à vista", `${currency.format(totals.discount)} · ${percent.format(settlement.entries[0]?.discountRate ?? 0)}`],
     ["Comissão", `${currency.format(totals.commission)} · ${percent.format(settlement.entries[0]?.commissionRate ?? 0)}`],
     ["Total a pagar", `${currency.format(settlement.amountPayable)} no relatório`],
-    ["Pagamentos registrados", `${settlement.paymentsTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} pagos`],
+    ["Pagamentos registrados", currency.format(settlement.paymentsTotal)],
     ["Extras", currency.format(settlement.extras)],
     ["Saldo", currency.format(settlement.balance)],
+  ];
+  const columns: DataTableColumn<SettlementEntry>[] = [
+    { key: "client", header: "Cliente", render: (entry) => entry.clientName },
+    { key: "net", header: "Líquido", render: (entry) => currency.format(entry.net) },
+    { key: "discount", header: "Desconto", render: (entry) => currency.format(entry.discount) },
+    { key: "commission", header: "Comissão", render: (entry) => currency.format(entry.commission) },
+    { key: "payable", header: "A pagar", render: (entry) => currency.format(entry.payable) },
   ];
 
   return (
@@ -43,10 +52,7 @@ export function SettlementDetail({ settlementId }: { settlementId: string }) {
         {facts.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
       </dl>
       <h3>Pedidos incluídos</h3>
-      <table className="data-table" aria-label="Pedidos incluídos no acerto">
-        <thead><tr><th>Cliente</th><th>Líquido</th><th>Desconto</th><th>Comissão</th><th>A pagar</th></tr></thead>
-        <tbody>{settlement.entries.map((entry) => <tr key={entry.orderId}><td>{entry.clientName}</td><td>{currency.format(entry.net)}</td><td>{currency.format(entry.discount)}</td><td>{currency.format(entry.commission)}</td><td>{currency.format(entry.payable)}</td></tr>)}</tbody>
-      </table>
+      <DataTable ariaLabel="Pedidos incluídos no acerto" columns={columns} rows={settlement.entries} getRowId={(entry) => entry.orderId} emptyMessage="Nenhum pedido incluído." />
     </article>
   );
 }

@@ -10,7 +10,7 @@ import { AnnualSupplierReport } from "./AnnualSupplierReport";
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 export function ReportsPage() {
-  const { incidents, installments, orders, settlements } = usePrototypeStore();
+  const { incidents, installments, orders, parties, settlements } = usePrototypeStore();
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [client, setClient] = useState("all");
@@ -19,18 +19,20 @@ export function ReportsPage() {
   const [region, setRegion] = useState("all");
   const filtered = orders.filter((order) => {
     const date = order.orderedAt ?? order.shipment?.shippedAt;
+    const relatedRegion = order.region ?? parties.find(({ id }) => id === order.clientId)?.region;
+    const hasDateBoundary = Boolean(start || end);
+    const matchesDate = !hasDateBoundary || Boolean(date && (!start || date >= start) && (!end || date <= end));
     return (client === "all" || order.clientId === client)
       && (supplier === "all" || order.supplierId === supplier)
       && (status === "all" || order.status === status)
-      && (region === "all" || order.region === region)
-      && (!start || !date || date >= start)
-      && (!end || !date || date <= end);
+      && (region === "all" || relatedRegion === region)
+      && matchesDate;
   });
   const filteredIds = new Set(filtered.map(({ id }) => id));
   const financial = installments.filter(({ orderId }) => filteredIds.has(orderId));
   const shipmentCount = filtered.filter(({ shipment }) => Boolean(shipment)).length;
   const incidentCount = incidents.filter(({ orderId }) => filteredIds.has(orderId)).length;
-  const settlementTotal = settlements.filter((item) => supplier === "all" || item.supplierId === supplier).reduce((sum, item) => sum + item.reportTotal, 0);
+  const commissionTotal = settlements.flatMap(({ entries }) => entries).filter(({ orderId }) => filteredIds.has(orderId)).reduce((sum, entry) => sum + entry.commission, 0);
   const financeTotal = financial.reduce((sum, item) => sum + item.expectedAmount, 0);
   const columns = useMemo<DataTableColumn<Order>[]>(() => [
     { key: "number", header: "Pedido", render: (row) => row.orderNumber ?? "Em cotação" },
@@ -42,7 +44,7 @@ export function ReportsPage() {
   const suppliers = [...new Map(orders.map((order) => [order.supplierId, order.supplierName])).entries()];
   const clients = [...new Map(orders.map((order) => [order.clientId, order.clientName])).entries()];
   const statuses = [...new Set(orders.map(({ status }) => status))] as OrderStatus[];
-  const regions = [...new Set(orders.map(({ region }) => region).filter(Boolean))] as string[];
+  const regions = [...new Set(orders.map((order) => order.region ?? parties.find(({ id }) => id === order.clientId)?.region).filter(Boolean))] as string[];
 
   return <section className="module-page">
     <header className="page-header"><div><span className="page-eyebrow">Análise operacional</span><h1>Relatórios</h1><p>Pedidos, movimentos financeiros, embarques, incidentes e comissões.</p></div></header>
@@ -60,7 +62,7 @@ export function ReportsPage() {
       <KpiCard label="Financeiro" value={currency.format(financeTotal)} detail={`${financial.length} vencimentos`} />
       <KpiCard label="Embarques" value={shipmentCount} detail="Pedidos com carga" />
       <KpiCard label="Incidentes" value={incidentCount} detail="Ocorrências vinculadas" tone={incidentCount ? "warning" : "default"} />
-      <KpiCard label="Comissões" value={currency.format(settlementTotal)} detail="Acertos do fornecedor" />
+      <KpiCard label="Comissões" value={currency.format(commissionTotal)} detail="Comissões dos pedidos filtrados" />
     </div>
     <section className="module-panel"><h2>Pedidos no recorte</h2><DataTable ariaLabel="Pedidos do relatório" columns={columns} rows={filtered} getRowId={(row) => row.id} emptyMessage="Nenhum pedido encontrado." /></section>
     {(supplier === "all" || supplier === "party-brasil-flora") && <AnnualSupplierReport supplierId="party-brasil-flora" year={2026} />}

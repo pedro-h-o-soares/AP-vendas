@@ -29,6 +29,14 @@ describe("acerto Santa Rita de junho de 2026", () => {
     expect(screen.getByText(/R\$\s*6\.700,00/)).toBeVisible();
     expect(screen.getByText(/R\$\s*108,08/)).toBeVisible();
     expect(screen.getAllByText(/R\$\s*38\.178,92/)[0]).toBeVisible();
+    const payments = screen.getByText("Pagamentos registrados").parentElement!;
+    expect(payments).toHaveTextContent(/R\$\s*53\.929,63/);
+    const row = screen.getByRole("row", { name: /SANTA CLARA MAT CONST/i });
+    expect(within(row).getByRole("cell", { name: "SANTA CLARA MAT CONST" })).toHaveAttribute("data-label", "Cliente");
+    expect(within(row).getByRole("cell", { name: /R\$\s*38\.178,92/ })).toHaveAttribute("data-label", "Líquido");
+    expect(within(row).getByRole("cell", { name: /R\$\s*954,47/ })).toHaveAttribute("data-label", "Desconto");
+    expect(within(row).getByRole("cell", { name: /R\$\s*1\.908,95/ })).toHaveAttribute("data-label", "Comissão");
+    expect(within(row).getByRole("cell", { name: /R\$\s*35\.315,50/ })).toHaveAttribute("data-label", "A pagar");
   });
 
   it("filtra acertos por fornecedor e período e abre a prévia", async () => {
