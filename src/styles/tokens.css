@@ -1,0 +1,17 @@
+:root {
+  --color-primary: #6f58d9;
+  --color-primary-strong: #5740c4;
+  --color-info: #4f8ff7;
+  --color-warning: #f59f3a;
+  --color-danger: #dc4c64;
+  --color-ink: #29243d;
+  --color-muted: #766f8c;
+  --surface-glass: rgba(255, 255, 255, 0.68);
+  --surface-glass-strong: rgba(255, 255, 255, 0.84);
+  --radius-control: 1.125rem;
+  --radius-card: 1.25rem;
+  --radius-panel: 1.75rem;
+  --shadow-card: 0 1.25rem 3.5rem rgba(61, 48, 119, 0.12);
+  --breakpoint-mobile: 40rem;
+  --breakpoint-desktop: 64rem;
+}
