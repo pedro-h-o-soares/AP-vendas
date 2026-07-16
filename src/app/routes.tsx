@@ -3,6 +3,7 @@ import { ProtectedRoute } from "../auth/ProtectedRoute";
 import { useAuth } from "../auth/AuthContext";
 import type { Permission } from "../auth/permissions";
 import { LoginPage } from "../features/auth/LoginPage";
+import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { AppShell } from "../layout/AppShell";
 
 export interface AppRouteDefinition {
@@ -38,6 +39,9 @@ function PlaceholderPage({ label }: { label: string }) {
   );
 }
 
+const pageForRoute = (path: string, label: string) =>
+  path === "/dashboard" ? <DashboardPage /> : <PlaceholderPage label={label} />;
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -49,7 +53,7 @@ export function AppRoutes() {
           element={
             <ProtectedRoute permission={permission}>
               <AppShell>
-                <PlaceholderPage label={label} />
+                {pageForRoute(path, label)}
               </AppShell>
             </ProtectedRoute>
           }

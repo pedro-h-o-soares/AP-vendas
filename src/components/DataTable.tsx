@@ -1,0 +1,70 @@
+import type { Key, ReactNode } from "react";
+
+export interface DataTableColumn<T> {
+  key: string;
+  header: ReactNode;
+  render: (row: T) => ReactNode;
+  align?: "start" | "center" | "end";
+}
+
+interface RowAction<T> {
+  label: (row: T) => string;
+  onClick: (row: T) => void;
+}
+
+interface DataTableProps<T> {
+  columns: DataTableColumn<T>[];
+  rows: T[];
+  getRowId: (row: T) => Key;
+  emptyMessage: string;
+  ariaLabel?: string;
+  rowAction?: RowAction<T>;
+}
+
+export function DataTable<T>({
+  columns,
+  rows,
+  getRowId,
+  emptyMessage,
+  ariaLabel,
+  rowAction,
+}: DataTableProps<T>) {
+  if (rows.length === 0) {
+    return <p className="data-table__empty" role="status">{emptyMessage}</p>;
+  }
+
+  return (
+    <div className="data-table__scroll">
+      <table className="data-table" aria-label={ariaLabel}>
+        <thead>
+          <tr>
+            {columns.map((column) => (
+              <th key={column.key} scope="col" data-align={column.align ?? "start"}>
+                {column.header}
+              </th>
+            ))}
+            {rowAction && <th scope="col"><span className="sr-only">Ações</span></th>}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={getRowId(row)}>
+              {columns.map((column) => (
+                <td key={column.key} data-label={column.header} data-align={column.align ?? "start"}>
+                  {column.render(row)}
+                </td>
+              ))}
+              {rowAction && (
+                <td className="data-table__action">
+                  <button type="button" onClick={() => rowAction.onClick(row)}>
+                    {rowAction.label(row)}
+                  </button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

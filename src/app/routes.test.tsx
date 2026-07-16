@@ -4,6 +4,11 @@ import { MemoryRouter } from "react-router-dom";
 import { expect, it } from "vitest";
 import { AuthProvider } from "../auth/AuthContext";
 import { AppRoutes, routeTable } from "./routes";
+import { PrototypeStoreProvider } from "../state/PrototypeStore";
+
+function Providers({ children }: { children: React.ReactNode }) {
+  return <PrototypeStoreProvider><AuthProvider>{children}</AuthProvider></PrototypeStoreProvider>;
+}
 
 it("declares protected destinations with their permissions", () => {
   expect(routeTable.map(({ path, permission }) => ({ path, permission }))).toEqual([
@@ -20,11 +25,11 @@ it("declares protected destinations with their permissions", () => {
 
 it("does not expose access denied as a public destination", () => {
   render(
-    <AuthProvider>
+    <Providers>
       <MemoryRouter initialEntries={["/access-denied"]}>
         <AppRoutes />
       </MemoryRouter>
-    </AuthProvider>,
+    </Providers>,
   );
 
   expect(screen.getByRole("heading", { name: "Ogura Rep" })).toBeInTheDocument();
@@ -35,11 +40,11 @@ it("redirects protected destinations to login and enters with a demo profile", a
   const user = userEvent.setup();
 
   render(
-    <AuthProvider>
+    <Providers>
       <MemoryRouter initialEntries={["/orders"]}>
         <AppRoutes />
       </MemoryRouter>
-    </AuthProvider>,
+    </Providers>,
   );
 
   expect(screen.getByRole("heading", { name: "Ogura Rep" })).toBeInTheDocument();
