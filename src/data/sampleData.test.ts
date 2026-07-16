@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   sampleIncidents,
+  sampleInstallment,
   sampleOrders,
+  sampleParties,
+  samplePayments,
+  samplePostalShipments,
   sampleSettlements,
+  sampleShipment,
 } from "./sampleData";
 
 describe("representative sample data", () => {
@@ -21,6 +26,52 @@ describe("representative sample data", () => {
       },
       shipment: { invoiceNumber: "1448" },
     });
+    expect(sampleShipment.shippedAt).toBe("2026-01-24");
+  });
+
+  it("assigns the verified clients and suppliers to their correct roles", () => {
+    expect(sampleParties).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "MADEIRAS BETINI", kind: "client" }),
+        expect.objectContaining({ name: "MADEPOL", kind: "supplier" }),
+        expect.objectContaining({ name: "SERMAD", kind: "client" }),
+        expect.objectContaining({ name: "IMPERIO WOODS", kind: "supplier" }),
+      ]),
+    );
+    expect(sampleOrders).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          clientName: "MADEIRAS BETINI",
+          supplierName: "MADEPOL",
+        }),
+        expect.objectContaining({
+          clientName: "SERMAD",
+          supplierName: "IMPERIO WOODS",
+        }),
+      ]),
+    );
+  });
+
+  it("contains the verified Betini payment dates and destination", () => {
+    expect(sampleInstallment).toMatchObject({
+      dueAt: "2026-02-09",
+      paidAt: "2026-04-16",
+      expectedAmount: 6_217.14,
+      actualAmount: 11_000,
+      method: "deposit",
+      recipient: "representative",
+      recipientName: "OGURA REP",
+    });
+    expect(samplePayments).toContainEqual(
+      expect.objectContaining({
+        paidAt: "2026-04-16",
+        amount: 11_000,
+        expectedAmount: 6_217.14,
+        method: "deposit",
+        recipient: "representative",
+        recipientName: "OGURA REP",
+      }),
+    );
   });
 
   it("covers every operational demo scenario", () => {
@@ -59,17 +110,39 @@ describe("representative sample data", () => {
         net: 38_178.92,
         discount: 954.473,
         commission: 1_908.946,
+        payable: 35_315.501,
       }),
     );
+    expect(settlement?.balance).toBe(0.004);
   });
 
   it("uses the real incident description", () => {
     expect(sampleIncidents).toContainEqual(
       expect.objectContaining({
-        clientName: "IMPERIO WOODS",
-        supplierName: "SERMAD",
+        clientName: "SERMAD",
+        supplierName: "IMPERIO WOODS",
         description: "FALTOU MATERIAL",
       }),
     );
+  });
+
+  it("contains the verified Correios shipment without invented dates", () => {
+    const postal = samplePostalShipments.find(
+      (item) => item.trackingCode === "AK199412308BR",
+    );
+
+    expect(postal).toMatchObject({
+      recipient: "PIGNATON (PEROBAS)",
+      city: "Ibiraçu",
+      state: "ES",
+      service: "Postagem (Ogura) - PAC",
+      postalCode: "188 277 41",
+      cost: 16.38,
+      status: "delivered",
+      paymentBy: "OGURA REP",
+      responsible: "CLIENTE",
+    });
+    expect(postal).not.toHaveProperty("postedAt");
+    expect(postal).not.toHaveProperty("deliveredAt");
   });
 });

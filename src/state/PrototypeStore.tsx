@@ -44,7 +44,9 @@ type IncidentInput = Pick<
   Partial<Pick<Incident, "shipmentId" | "type" | "priority" | "owner">>;
 
 type PaymentInput = Omit<Payment, "id">;
-type PostalShipmentInput = Omit<PostalShipment, "id">;
+type PostalShipmentInput = Omit<PostalShipment, "id" | "orderId"> & {
+  orderId: string;
+};
 
 export interface PrototypeStore {
   orders: Order[];
@@ -67,20 +69,42 @@ export interface PrototypeStore {
 
 const PrototypeStoreContext = createContext<PrototypeStore | null>(null);
 
+interface DemoState {
+  orders: Order[];
+  parties: Party[];
+  incidents: Incident[];
+  installments: Installment[];
+  payments: Payment[];
+  checks: Check[];
+  postalShipments: PostalShipment[];
+  settlements: Settlement[];
+  users: UserProfile[];
+}
+
+const clone = <T,>(value: T): T => structuredClone(value);
+
+const createDemoState = (): DemoState =>
+  clone({
+    orders: sampleOrders,
+    parties: sampleParties,
+    incidents: sampleIncidents,
+    installments: sampleInstallments,
+    payments: samplePayments,
+    checks: sampleChecks,
+    postalShipments: samplePostalShipments,
+    settlements: sampleSettlements,
+    users: sampleUsers,
+  });
+
 const replaceOrder = (orders: Order[], changed: Order): Order[] =>
   orders.map((order) => (order.id === changed.id ? changed : order));
 
 export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   const sequence = useRef(0);
-  const [orders, setOrders] = useState<Order[]>(sampleOrders);
-  const [incidents, setIncidents] = useState<Incident[]>(sampleIncidents);
-  const [payments, setPayments] = useState<Payment[]>(samplePayments);
-  const [postalShipments, setPostalShipments] = useState<PostalShipment[]>(
-    samplePostalShipments,
-  );
+  const [demo, setDemo] = useState<DemoState>(createDemoState);
 
   const findOrder = (orderId: string): Order => {
-    const order = orders.find((candidate) => candidate.id === orderId);
+    const order = demo.orders.find((candidate) => candidate.id === orderId);
     if (!order) throw new Error(`Order not found: ${orderId}`);
     return order;
   };
@@ -88,13 +112,16 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   const nextId = (prefix: string): string => `${prefix}-${++sequence.current}`;
 
   const createQuote = (input: QuoteInput): Order => {
-    const quote: Order = {
-      ...input,
+    const quote: Order = clone({
+      ...clone(input),
       id: nextId("quote"),
       status: "quote",
-    };
-    setOrders((current) => [...current, quote]);
-    return quote;
+    });
+    setDemo((current) => ({
+      ...current,
+      orders: [...current.orders, quote],
+    }));
+    return clone(quote);
   };
 
   const convertQuoteToOrder = (quoteId: string, orderNumber: string): Order => {
@@ -104,14 +131,20 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
       oguraNumber: orderNumber,
       status: "awaiting-supplier",
     };
-    setOrders((current) => replaceOrder(current, changed));
-    return changed;
+    setDemo((current) => ({
+      ...current,
+      orders: replaceOrder(current.orders, changed),
+    }));
+    return clone(changed);
   };
 
   const updateOrderStatus = (orderId: string, status: OrderStatus): Order => {
     const changed = { ...findOrder(orderId), status };
-    setOrders((current) => replaceOrder(current, changed));
-    return changed;
+    setDemo((current) => ({
+      ...current,
+      orders: replaceOrder(current.orders, changed),
+    }));
+    return clone(changed);
   };
 
   const createIncident = (input: IncidentInput): Incident => {
@@ -130,45 +163,53 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
       status: "incident",
       incidentIds: [...(order.incidentIds ?? []), incident.id],
     };
-    setIncidents((current) => [...current, incident]);
-    setOrders((current) => replaceOrder(current, changedOrder));
-    return incident;
+    setDemo((current) => ({
+      ...current,
+      incidents: [...current.incidents, incident],
+      orders: replaceOrder(current.orders, changedOrder),
+    }));
+    return clone(incident);
   };
 
   const recordPayment = (input: PaymentInput): Payment => {
-    const payment = { ...input, id: nextId("payment") };
-    findOrder(input.orderId);
-    setPayments((current) => [...current, payment]);
-    return payment;
+    const payment = clone({ ...input, id: nextId("payment") });
+    const order = findOrder(input.orderId);
+    const changedOrder = {
+      ...order,
+      paymentIds: [...(order.paymentIds ?? []), payment.id],
+    };
+    setDemo((current) => ({
+      ...current,
+      payments: [...current.payments, payment],
+      orders: replaceOrder(current.orders, changedOrder),
+    }));
+    return clone(payment);
   };
 
   const createPostalShipment = (input: PostalShipmentInput): PostalShipment => {
-    const shipment = { ...input, id: nextId("postal") };
-    findOrder(input.orderId);
-    setPostalShipments((current) => [...current, shipment]);
-    return shipment;
+    const shipment = clone({ ...input, id: nextId("postal") });
+    const order = findOrder(input.orderId);
+    const changedOrder = {
+      ...order,
+      postalShipmentIds: [...(order.postalShipmentIds ?? []), shipment.id],
+    };
+    setDemo((current) => ({
+      ...current,
+      postalShipments: [...current.postalShipments, shipment],
+      orders: replaceOrder(current.orders, changedOrder),
+    }));
+    return clone(shipment);
   };
 
   const resetDemo = () => {
     sequence.current = 0;
-    setOrders(sampleOrders);
-    setIncidents(sampleIncidents);
-    setPayments(samplePayments);
-    setPostalShipments(samplePostalShipments);
+    setDemo(createDemoState());
   };
 
   return (
     <PrototypeStoreContext.Provider
       value={{
-        orders,
-        parties: sampleParties,
-        incidents,
-        installments: sampleInstallments,
-        payments,
-        checks: sampleChecks,
-        postalShipments,
-        settlements: sampleSettlements,
-        users: sampleUsers,
+        ...demo,
         createQuote,
         convertQuoteToOrder,
         updateOrderStatus,

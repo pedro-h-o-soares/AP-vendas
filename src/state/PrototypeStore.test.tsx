@@ -54,8 +54,8 @@ describe("PrototypeStore", () => {
     act(() => {
       const incident = result.current.createIncident({
         orderId,
-        clientName: "IMPERIO WOODS",
-        supplierName: "SERMAD",
+        clientName: "SERMAD",
+        supplierName: "IMPERIO WOODS",
         title: "Material faltante",
         description: "FALTOU MATERIAL",
       });
@@ -96,6 +96,71 @@ describe("PrototypeStore", () => {
 
     expect(result.current.payments.at(-1)?.amount).toBe(1_000);
     expect(result.current.postalShipments.at(-1)?.trackingCode).toBe("BR-DEMO-001");
+    expect(result.current.orders.find((order) => order.id === orderId)).toMatchObject({
+      paymentIds: expect.arrayContaining([result.current.payments.at(-1)?.id]),
+      postalShipmentIds: expect.arrayContaining([
+        result.current.postalShipments.at(-1)?.id,
+      ]),
+    });
+  });
+
+  it("isolates nested demo records between providers and after reset", () => {
+    const first = renderHook(() => usePrototypeStore(), { wrapper });
+    const second = renderHook(() => usePrototypeStore(), { wrapper });
+    const originalClient = second.result.current.orders[0].clientName;
+
+    first.result.current.orders[0].clientName = "ALTERADO";
+    first.result.current.orders[0].items.push({
+      id: "external-item",
+      description: "ALTERADO",
+      unit: "un",
+      quantity: 1,
+      unitPrice: 1,
+      total: 1,
+    });
+
+    expect(second.result.current.orders[0]).toMatchObject({
+      clientName: originalClient,
+      items: [],
+    });
+
+    act(() => first.result.current.resetDemo());
+    expect(first.result.current.orders[0]).toMatchObject({
+      clientName: originalClient,
+      items: [],
+    });
+  });
+
+  it("does not expose input or returned item references in stored quotes", () => {
+    const { result } = renderHook(() => usePrototypeStore(), { wrapper });
+    const items = [
+      {
+        id: "item-1",
+        description: "Original",
+        unit: "un",
+        quantity: 1,
+        unitPrice: 10,
+        total: 10,
+      },
+    ];
+    let quoteId = "";
+
+    act(() => {
+      const quote = result.current.createQuote({
+        clientId: "party-101-madeiras",
+        clientName: "101 COMERCIO DE MADEIRAS LTDA ME",
+        supplierId: "party-brasil-flora",
+        supplierName: "BRASIL FLORA",
+        paymentTerms: "30 dias",
+        items,
+      });
+      quoteId = quote.id;
+      items[0].description = "Alterado na entrada";
+      quote.items[0].description = "Alterado no retorno";
+    });
+
+    expect(result.current.orders.find((order) => order.id === quoteId)?.items[0]
+      .description).toBe("Original");
   });
 
   it("restores the initial demo state", () => {
@@ -104,10 +169,10 @@ describe("PrototypeStore", () => {
 
     act(() => {
       result.current.createQuote({
-        clientId: "party-madepol",
-        clientName: "MADEPOL",
-        supplierId: "party-betini",
-        supplierName: "BETINI",
+        clientId: "party-madeiras-betini",
+        clientName: "MADEIRAS BETINI",
+        supplierId: "party-madepol",
+        supplierName: "MADEPOL",
         paymentTerms: "30/60/90/120",
         items: [],
       });

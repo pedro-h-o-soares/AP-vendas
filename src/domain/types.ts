@@ -179,6 +179,7 @@ export interface Installment {
   totalInstallments: number;
   dueAt: ISODate;
   recipient: PaymentRecipient;
+  recipientName?: string;
   expectedAmount: number;
   paidAt?: ISODate;
   actualAmount?: number;
@@ -202,6 +203,7 @@ export interface Payment {
   difference?: number;
   method: PaymentMethod;
   recipient: PaymentRecipient;
+  recipientName?: string;
   operation?: string;
   bank?: string;
   branch?: string;
@@ -228,21 +230,26 @@ export interface Check {
 
 export interface PostalShipment {
   id: string;
-  orderId: string;
+  orderId?: string;
   checkIds: string[];
   recipient?: string;
+  city?: string;
+  state?: string;
   carrier: string;
   service?: string;
+  postalCode?: string;
   trackingCode: string;
   cost?: number;
   invoice?: string;
-  postedAt: ISODate;
+  postedAt?: ISODate;
   expectedDeliveryAt?: ISODate;
   deliveredAt?: ISODate;
   status: PostalStatus;
   paidAmount?: number;
   receivableAmount?: number;
   difference?: number;
+  paymentBy?: string;
+  responsible?: string;
   notes?: string;
 }
 
