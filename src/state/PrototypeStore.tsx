@@ -125,8 +125,12 @@ const createDemoState = (): DemoState =>
 const replaceOrder = (orders: Order[], changed: Order): Order[] =>
   orders.map((order) => (order.id === changed.id ? changed : order));
 
+const createPostalCheckReservations = (checks: Check[]): Map<string, string> =>
+  new Map(checks.flatMap((check) => check.postalShipmentId ? [[check.id, check.postalShipmentId]] : []));
+
 export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   const sequence = useRef(0);
+  const postalCheckReservations = useRef(createPostalCheckReservations(sampleChecks));
   const [demo, setDemo] = useState<DemoState>(createDemoState);
 
   const findOrder = (orderId: string): Order => {
@@ -348,22 +352,29 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   };
 
   const createPostalShipment = (input: PostalShipmentInput): PostalShipment => {
-    const linkedCheck = demo.checks.find((check) => input.checkIds.includes(check.id) && check.postalShipmentId);
-    if (linkedCheck) {
-      throw new Error(`Cheque já vinculado à postagem: ${linkedCheck.postalShipmentId}`);
+    findOrder(input.orderId);
+    input.checkIds.forEach((checkId) => {
+      if (!demo.checks.some(({ id }) => id === checkId)) throw new Error(`Check not found: ${checkId}`);
+    });
+    const reservedCheckId = input.checkIds.find((checkId) => postalCheckReservations.current.has(checkId));
+    if (reservedCheckId) {
+      throw new Error(`Cheque já vinculado à postagem: ${postalCheckReservations.current.get(reservedCheckId)}`);
     }
     const shipment = clone({ ...input, id: nextId("postal") });
-    const order = findOrder(input.orderId);
-    const changedOrder = {
-      ...order,
-      postalShipmentIds: [...(order.postalShipmentIds ?? []), shipment.id],
-    };
-    setDemo((current) => ({
-      ...current,
-      postalShipments: [...current.postalShipments, shipment],
-      orders: replaceOrder(current.orders, changedOrder),
-      checks: current.checks.map((check) => input.checkIds.includes(check.id) ? { ...check, postalShipmentId: shipment.id } : check),
-    }));
+    input.checkIds.forEach((checkId) => postalCheckReservations.current.set(checkId, shipment.id));
+    setDemo((current) => {
+      const order = current.orders.find(({ id }) => id === input.orderId)!;
+      const changedOrder = {
+        ...order,
+        postalShipmentIds: [...(order.postalShipmentIds ?? []), shipment.id],
+      };
+      return {
+        ...current,
+        postalShipments: [...current.postalShipments, shipment],
+        orders: replaceOrder(current.orders, changedOrder),
+        checks: current.checks.map((check) => input.checkIds.includes(check.id) ? { ...check, postalShipmentId: shipment.id } : check),
+      };
+    });
     return clone(shipment);
   };
 
@@ -396,6 +407,7 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
 
   const resetDemo = () => {
     sequence.current = 0;
+    postalCheckReservations.current = createPostalCheckReservations(sampleChecks);
     setDemo(createDemoState());
   };
 

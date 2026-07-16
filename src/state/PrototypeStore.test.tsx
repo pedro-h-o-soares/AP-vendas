@@ -209,6 +209,39 @@ describe("PrototypeStore", () => {
     expect(result.current.postalShipments.filter(({ checkIds }) => checkIds.includes(check.id))).toHaveLength(1);
   });
 
+  it("reserva o cheque atomicamente contra duas criações síncronas", () => {
+    const { result } = renderHook(() => usePrototypeStore(), { wrapper });
+    const check = result.current.checks[0];
+    let postalId = "";
+
+    act(() => {
+      postalId = result.current.createPostalShipment({
+        orderId: check.orderId,
+        carrier: "Correios",
+        service: "PAC",
+        trackingCode: "OG000000201BR",
+        status: "prepared",
+        checkIds: [check.id],
+      }).id;
+      expect(() => result.current.createPostalShipment({
+        orderId: check.orderId,
+        carrier: "Correios",
+        service: "SEDEX",
+        trackingCode: "OG000000202BR",
+        status: "prepared",
+        checkIds: [check.id],
+      })).toThrow(/cheque já vinculado/i);
+    });
+
+    const changedCheck = result.current.checks.find(({ id }) => id === check.id)!;
+    const changedOrder = result.current.orders.find(({ id }) => id === check.orderId)!;
+    expect(result.current.postalShipments.filter(({ checkIds }) => checkIds.includes(check.id))).toEqual([
+      expect.objectContaining({ id: postalId, trackingCode: "OG000000201BR" }),
+    ]);
+    expect(changedCheck.postalShipmentId).toBe(postalId);
+    expect(changedOrder.postalShipmentIds).toEqual([postalId]);
+  });
+
   it("updates a party only in the in-memory provider state", () => {
     const { result } = renderHook(() => usePrototypeStore(), { wrapper });
     const party = result.current.parties[0];
