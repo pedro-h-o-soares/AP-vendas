@@ -123,6 +123,7 @@ select:focus-visible {
 }
 
 .filter-bar select,
+.filter-bar input,
 .form-field input,
 .form-field select,
 .form-field textarea {
@@ -134,6 +135,76 @@ select:focus-visible {
   background: rgba(255, 255, 255, 0.9);
   font: inherit;
 }
+
+.button-primary,
+.order-actions button,
+.wizard-actions button,
+.wizard-fields > button,
+.back-link {
+  min-height: 2.65rem;
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+  border: 0;
+  border-radius: 0.85rem;
+  background: rgba(111, 88, 217, 0.1);
+  font-weight: 750;
+}
+
+.button-primary {
+  color: white;
+  background: var(--color-primary);
+}
+
+.orders-table-panel,
+.order-tab-panel {
+  margin-top: 1rem;
+  padding: 1.2rem;
+  border: 1px solid rgba(111, 88, 217, 0.1);
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.wizard-steps {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+}
+
+.wizard-steps span {
+  flex: 0 0 auto;
+  padding: 0.45rem 0.6rem;
+  border-radius: 99rem;
+  color: var(--color-muted);
+  background: rgba(111, 88, 217, 0.07);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.wizard-steps span[aria-current="step"] { color: var(--color-primary-strong); background: rgba(111, 88, 217, 0.16); }
+.wizard-fields { display: grid; gap: 1rem; }
+.quote-item-confirmation { display: grid; gap: 0.8rem; padding: 1rem; border-radius: 0.9rem; background: rgba(111, 88, 217, 0.05); }
+.quote-item-confirmation h3 { margin: 0; font-size: 0.9rem; }
+.wizard-actions { display: flex; justify-content: flex-end; gap: 0.7rem; margin-top: 1.5rem; }
+.wizard-errors { margin-bottom: 1rem; padding: 0.7rem 0.9rem; border-radius: 0.8rem; color: var(--color-danger); background: rgba(220, 76, 100, 0.08); }
+.wizard-errors p { margin: 0.2rem 0; }
+.session-notice { padding: 0.8rem; border-radius: 0.8rem; color: #257862; background: rgba(69, 166, 141, 0.12); }
+.check-field { display: flex; align-items: center; gap: 0.55rem; font-weight: 700; }
+
+.order-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.6rem; }
+.back-link { min-height: auto; margin-bottom: 0.5rem; padding: 0.35rem 0.5rem; color: var(--color-primary-strong); background: transparent; }
+.order-tabs { display: flex; gap: 0.4rem; margin-top: 1.5rem; overflow-x: auto; }
+.order-tabs button { flex: 0 0 auto; padding: 0.65rem 0.8rem; cursor: pointer; border: 0; border-radius: 0.8rem; color: var(--color-muted); background: transparent; font-weight: 750; }
+.order-tabs button[aria-selected="true"] { color: var(--color-primary-strong); background: rgba(111, 88, 217, 0.12); }
+.order-reference { color: var(--color-muted); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.detail-grid article { padding: 1rem; border-radius: 0.9rem; background: rgba(111, 88, 217, 0.05); }
+.detail-grid h3 { margin-top: 0; }
+.detail-total { text-align: right; }
+.order-timeline { display: grid; gap: 1rem; margin: 0; padding: 0; list-style: none; }
+.order-timeline li { display: grid; grid-template-columns: auto 1fr; gap: 0.85rem; align-items: start; }
+.order-timeline strong { display: block; }
+.order-timeline p { margin: 0.2rem 0 0; color: var(--color-muted); }
 
 .form-field__hint {
   font-weight: 500;
@@ -579,6 +650,10 @@ select:focus-visible {
   .filter-bar,
   .kpi-grid,
   .kpi-grid--finance { grid-template-columns: 1fr; }
+
+  .page-header { flex-direction: column; }
+  .order-actions { justify-content: flex-start; }
+  .detail-grid { grid-template-columns: 1fr; }
 
   .data-table thead {
     position: absolute;

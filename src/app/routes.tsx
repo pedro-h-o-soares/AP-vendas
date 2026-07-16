@@ -4,6 +4,8 @@ import { useAuth } from "../auth/AuthContext";
 import type { Permission } from "../auth/permissions";
 import { LoginPage } from "../features/auth/LoginPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
+import { OrderDetailPage } from "../features/orders/OrderDetailPage";
+import { OrdersPage } from "../features/orders/OrdersPage";
 import { AppShell } from "../layout/AppShell";
 
 export interface AppRouteDefinition {
@@ -16,7 +18,7 @@ export interface AppRouteDefinition {
 // eslint-disable-next-line react-refresh/only-export-components
 export const routeTable: AppRouteDefinition[] = [
   { path: "/dashboard", label: "Dashboard", permission: "view-dashboard" },
-  { path: "/orders", label: "Pedidos", permission: "view-orders" },
+  { path: "/pedidos", label: "Pedidos", permission: "view-orders" },
   { path: "/logistics", label: "Logística", permission: "view-logistics" },
   { path: "/finance", label: "Financeiro", permission: "view-finance" },
   { path: "/checks", label: "Cheques", permission: "view-checks" },
@@ -40,7 +42,7 @@ function PlaceholderPage({ label }: { label: string }) {
 }
 
 const pageForRoute = (path: string, label: string) =>
-  path === "/dashboard" ? <DashboardPage /> : <PlaceholderPage label={label} />;
+  path === "/dashboard" ? <DashboardPage /> : path === "/pedidos" ? <OrdersPage /> : <PlaceholderPage label={label} />;
 
 export function AppRoutes() {
   return (
@@ -59,6 +61,15 @@ export function AppRoutes() {
           }
         />
       ))}
+      <Route
+        path="/pedidos/:orderId"
+        element={
+          <ProtectedRoute permission="view-orders">
+            <AppShell><OrderDetailPage /></AppShell>
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/orders" element={<Navigate replace to="/pedidos" />} />
       <Route path="*" element={<Navigate replace to="/dashboard" />} />
     </Routes>
   );

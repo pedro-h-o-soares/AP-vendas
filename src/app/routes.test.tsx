@@ -13,7 +13,7 @@ function Providers({ children }: { children: React.ReactNode }) {
 it("declares protected destinations with their permissions", () => {
   expect(routeTable.map(({ path, permission }) => ({ path, permission }))).toEqual([
     { path: "/dashboard", permission: "view-dashboard" },
-    { path: "/orders", permission: "view-orders" },
+    { path: "/pedidos", permission: "view-orders" },
     { path: "/logistics", permission: "view-logistics" },
     { path: "/finance", permission: "view-finance" },
     { path: "/checks", permission: "view-checks" },

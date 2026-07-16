@@ -11,7 +11,7 @@ import { can, type Permission } from "../auth/permissions";
 
 const destinations = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, permission: "view-dashboard" },
-  { label: "Pedidos", to: "/orders", icon: ShoppingCart, permission: "view-orders" },
+  { label: "Pedidos", to: "/pedidos", icon: ShoppingCart, permission: "view-orders" },
   { label: "Logística", to: "/logistics", icon: Truck, permission: "view-logistics" },
   { label: "Financeiro", to: "/finance", icon: WalletCards, permission: "view-finance" },
   { label: "Mais", to: "/reports", icon: MoreHorizontal, permission: "view-reports" },
