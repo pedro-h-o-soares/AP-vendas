@@ -3,6 +3,7 @@ import type { Key, ReactNode } from "react";
 export interface DataTableColumn<T> {
   key: string;
   header: ReactNode;
+  mobileLabel?: string;
   render: (row: T) => ReactNode;
   align?: "start" | "center" | "end";
 }
@@ -50,7 +51,11 @@ export function DataTable<T>({
           {rows.map((row) => (
             <tr key={getRowId(row)}>
               {columns.map((column) => (
-                <td key={column.key} data-label={column.header} data-align={column.align ?? "start"}>
+                <td
+                  key={column.key}
+                  data-label={column.mobileLabel ?? (typeof column.header === "string" ? column.header : undefined)}
+                  data-align={column.align ?? "start"}
+                >
                   {column.render(row)}
                 </td>
               ))}

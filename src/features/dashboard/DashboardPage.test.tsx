@@ -1,9 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { AuthProvider, useAuth } from "../../auth/AuthContext";
 import type { Role } from "../../domain/types";
 import { PrototypeStoreProvider } from "../../state/PrototypeStore";
+import { AppShell } from "../../layout/AppShell";
 import { DashboardPage } from "./DashboardPage";
 
 function Session({ children }: { children: ReactNode }) {
@@ -67,4 +69,33 @@ it("provides operational filters and a persistent prototype notice", async () =>
   expect(screen.getByRole("combobox", { name: "Região" })).toBeVisible();
   expect(screen.getByRole("note")).toHaveTextContent(/protótipo sem gravação permanente/i);
   expect(screen.getByText("SERMAD")).toBeVisible();
+});
+
+it("filters every operational view by a deterministic data-relative period", async () => {
+  await renderDashboard("admin");
+  const user = userEvent.setup();
+
+  expect(screen.getByText("SERMAD")).toBeVisible();
+  await user.selectOptions(screen.getByRole("combobox", { name: "Período" }), "90");
+
+  expect(screen.queryByText("SERMAD")).not.toBeInTheDocument();
+  expect(screen.getByText("101 COMERCIO DE MADEIRAS LTDA ME")).toBeVisible();
+  expect(screen.getByRole("combobox", { name: "Período" })).toHaveValue("90");
+});
+
+it("uses the AppShell as the single main landmark", async () => {
+  const user = userEvent.setup();
+  render(
+    <PrototypeStoreProvider>
+      <AuthProvider>
+        <MemoryRouter>
+          <Session><AppShell><DashboardPage /></AppShell></Session>
+        </MemoryRouter>
+      </AuthProvider>
+    </PrototypeStoreProvider>,
+  );
+  await user.click(screen.getByRole("button", { name: "Admin" }));
+
+  expect(screen.getAllByRole("main")).toHaveLength(1);
+  expect(screen.getByRole("region", { name: "Dashboard operacional" })).toBeVisible();
 });

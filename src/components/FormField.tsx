@@ -12,7 +12,9 @@ export function FormField({ label, children, hint, error }: FormFieldProps) {
   const fieldId = (children.props.id as string | undefined) ?? generatedId;
   const hintId = `${fieldId}-hint`;
   const errorId = `${fieldId}-error`;
-  const describedBy = [hint && hintId, error && errorId].filter(Boolean).join(" ") || undefined;
+  const describedBy = [children.props["aria-describedby"], hint && hintId, error && errorId]
+    .filter(Boolean)
+    .join(" ") || undefined;
 
   return (
     <div className="form-field">

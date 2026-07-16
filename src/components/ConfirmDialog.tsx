@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
+import { useModalFocus } from "./useModalFocus";
 
 interface ConfirmDialogProps {
   title: string;
@@ -20,18 +21,15 @@ export function ConfirmDialog({
   const titleId = useId();
   const descriptionId = useId();
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const previousFocus = document.activeElement as HTMLElement | null;
-    cancelRef.current?.focus();
-    return () => previousFocus?.focus();
-  }, [open]);
+  useModalFocus(open, onCancel, dialogRef, cancelRef);
 
   if (!open) return null;
   return (
     <div className="dialog-backdrop">
       <section
+        ref={dialogRef}
         className="confirm-dialog"
         role="alertdialog"
         aria-modal="true"

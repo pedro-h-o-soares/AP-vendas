@@ -14,7 +14,7 @@ interface ContactRow {
 }
 
 const columns: DataTableColumn<ContactRow>[] = [
-  { key: "name", header: "Cliente", render: (row) => row.name },
+  { key: "name", header: <span>Cliente</span>, mobileLabel: "Cliente", render: (row) => row.name },
 ];
 
 describe("DataTable", () => {
@@ -34,6 +34,8 @@ describe("DataTable", () => {
     );
 
     expect(screen.getByRole("table", { name: "Clientes recentes" })).toBeVisible();
+    expect(screen.getByRole("columnheader", { name: "Cliente" })).toBeInTheDocument();
+    expect(screen.getByText("SERMAD").closest("td")).toHaveAttribute("data-label", "Cliente");
     await user.click(screen.getByRole("button", { name: "Abrir SERMAD" }));
     expect(onRowAction).toHaveBeenCalledWith(expect.objectContaining({ name: "SERMAD" }));
   });
@@ -61,7 +63,7 @@ it("labels the drawer and returns focus on close", async () => {
       <>
         <button type="button" onClick={() => setOpen(true)}>Abrir detalhes</button>
         <Drawer title="Detalhes" open={open} onClose={() => setOpen(false)}>
-          Conteúdo
+          <button type="button">Ação interna</button>
         </Drawer>
       </>
     );
@@ -71,6 +73,16 @@ it("labels the drawer and returns focus on close", async () => {
   const trigger = screen.getByRole("button", { name: "Abrir detalhes" });
   await user.click(trigger);
   expect(screen.getByRole("dialog", { name: "Detalhes" })).toBeVisible();
+  expect(screen.getByRole("dialog", { name: "Detalhes" })).toHaveAttribute("aria-modal", "true");
+  await user.tab({ shift: true });
+  expect(screen.getByRole("button", { name: "Ação interna" })).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole("button", { name: "Fechar Detalhes" })).toHaveFocus();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("dialog", { name: "Detalhes" })).not.toBeInTheDocument();
+  expect(trigger).toHaveFocus();
+
+  await user.click(trigger);
   await user.click(screen.getByRole("button", { name: "Fechar Detalhes" }));
   expect(trigger).toHaveFocus();
 });
@@ -89,7 +101,7 @@ it("labels the confirmation dialog and restores focus after cancel", async () =>
           onCancel={() => setOpen(false)}
           onConfirm={() => undefined}
         >
-          Esta ação não pode ser desfeita.
+          <a href="#details">Ver detalhes</a>
         </ConfirmDialog>
       </>
     );
@@ -99,6 +111,18 @@ it("labels the confirmation dialog and restores focus after cancel", async () =>
   const trigger = screen.getByRole("button", { name: "Excluir pedido" });
   await user.click(trigger);
   expect(screen.getByRole("alertdialog", { name: "Excluir pedido?" })).toBeVisible();
+  expect(screen.getByRole("alertdialog", { name: "Excluir pedido?" })).toHaveAttribute("aria-modal", "true");
+  await user.tab({ shift: true });
+  expect(screen.getByRole("link", { name: "Ver detalhes" })).toHaveFocus();
+  await user.tab({ shift: true });
+  expect(screen.getByRole("button", { name: "Confirmar" })).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole("link", { name: "Ver detalhes" })).toHaveFocus();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("alertdialog", { name: "Excluir pedido?" })).not.toBeInTheDocument();
+  expect(trigger).toHaveFocus();
+
+  await user.click(trigger);
   await user.click(screen.getByRole("button", { name: "Cancelar" }));
   expect(trigger).toHaveFocus();
 });
@@ -116,11 +140,16 @@ it("offers retry for an asynchronous error", async () => {
 it("connects form help and error messages to the field", () => {
   render(
     <FormField label="Cliente" hint="Digite o nome completo" error="Cliente obrigatório">
-      <input />
+      <input aria-describedby="external-description" />
     </FormField>,
   );
 
+  const externalDescription = document.createElement("span");
+  externalDescription.id = "external-description";
+  externalDescription.textContent = "Descrição externa";
+  document.body.append(externalDescription);
+
   const field = screen.getByRole("textbox", { name: "Cliente" });
-  expect(field).toHaveAccessibleDescription("Digite o nome completo Cliente obrigatório");
+  expect(field).toHaveAccessibleDescription("Descrição externa Digite o nome completo Cliente obrigatório");
   expect(field).toHaveAttribute("aria-invalid", "true");
 });

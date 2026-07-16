@@ -42,14 +42,27 @@ export function DashboardPage() {
   const [responsible, setResponsible] = useState("all");
   const [supplier, setSupplier] = useState("all");
   const [region, setRegion] = useState("all");
+  const [period, setPeriod] = useState("all");
 
   const suppliers = [...new Set(orders.map((order) => order.supplierName))].sort();
   const regions = [...new Set(orders.map((order) => order.region).filter(Boolean))] as string[];
-  const filteredOrders = orders.filter((order) =>
-    (responsible === "all" || order.ownerId === responsible) &&
-    (supplier === "all" || order.supplierName === supplier) &&
-    (region === "all" || order.region === region),
+  const orderDate = (order: Order) => order.orderedAt ?? order.shipment?.shippedAt;
+  const datedOrders = orders.filter((order) => orderDate(order));
+  const maximumDemoDate = Math.max(
+    ...datedOrders.map((order) => new Date(`${orderDate(order)}T00:00:00`).getTime()),
   );
+  const filteredOrders = orders.filter((order) => {
+    const date = orderDate(order);
+    const withinPeriod = period === "all" || (
+      date !== undefined &&
+      new Date(`${date}T00:00:00`).getTime() >= maximumDemoDate - (Number(period) - 1) * 86_400_000
+    );
+    return withinPeriod &&
+      (responsible === "all" || order.ownerId === responsible) &&
+      (supplier === "all" || order.supplierName === supplier) &&
+      (region === "all" || order.region === region);
+  });
+  const filteredOrderIds = new Set(filteredOrders.map((order) => order.id));
 
   const statusValues = useMemo(() => {
     const counts = new Map<OrderStatus, number>();
@@ -64,17 +77,21 @@ export function DashboardPage() {
     { key: "status", header: "Status", render: (order) => <StatusBadge tone={statusTone(order.status)}>{statusLabels[order.status]}</StatusBadge> },
   ];
 
-  const openIncidents = incidents.filter((incident) => incident.status !== "resolved");
+  const openIncidents = incidents.filter(
+    (incident) => incident.status !== "resolved" && filteredOrderIds.has(incident.orderId),
+  );
   const awaiting = filteredOrders.filter((order) => order.status.startsWith("awaiting"));
   const inTransit = filteredOrders.filter((order) => order.status === "in-transit" || order.status === "shipment-informed");
   const delivered = filteredOrders.filter((order) => order.status === "delivered" || order.status === "completed");
-  const expected = installments.reduce((sum, installment) => sum + installment.expectedAmount, 0);
-  const received = payments.reduce((sum, payment) => sum + payment.amount, 0);
-  const overdue = installments.filter((installment) => installment.status === "overdue").reduce((sum, installment) => sum + installment.expectedAmount, 0);
+  const filteredInstallments = installments.filter((installment) => filteredOrderIds.has(installment.orderId));
+  const filteredPayments = payments.filter((payment) => filteredOrderIds.has(payment.orderId));
+  const expected = filteredInstallments.reduce((sum, installment) => sum + installment.expectedAmount, 0);
+  const received = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
+  const overdue = filteredInstallments.filter((installment) => installment.status === "overdue").reduce((sum, installment) => sum + installment.expectedAmount, 0);
   const canViewFinance = user?.role === "admin" || user?.role === "finance";
 
   return (
-    <main className="dashboard-page">
+    <section className="dashboard-page" aria-label="Dashboard operacional">
       <header className="page-header">
         <div>
           <span className="page-eyebrow">Visão operacional</span>
@@ -85,7 +102,7 @@ export function DashboardPage() {
       <PrototypeNotice />
 
       <FilterBar>
-        <label>Período<select aria-label="Período" defaultValue="30"><option value="7">7 dias</option><option value="30">30 dias</option><option value="90">90 dias</option></select></label>
+        <label>Período<select aria-label="Período" value={period} onChange={(event) => setPeriod(event.target.value)}><option value="all">Todo o período</option><option value="7">7 dias</option><option value="30">30 dias</option><option value="90">90 dias</option></select></label>
         <label>Responsável<select aria-label="Responsável" value={responsible} onChange={(event) => setResponsible(event.target.value)}><option value="all">Todos</option>{users.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}</select></label>
         <label>Fornecedor<select aria-label="Fornecedor" value={supplier} onChange={(event) => setSupplier(event.target.value)}><option value="all">Todos</option>{suppliers.map((name) => <option key={name}>{name}</option>)}</select></label>
         <label>Região<select aria-label="Região" value={region} onChange={(event) => setRegion(event.target.value)}><option value="all">Todas</option>{regions.map((name) => <option key={name}>{name}</option>)}</select></label>
@@ -112,7 +129,7 @@ export function DashboardPage() {
       <div className="dashboard-grid">
         <section aria-labelledby="recent-orders" className="dashboard-panel">
           <h2 id="recent-orders">Pedidos recentes</h2>
-          <DataTable ariaLabel="Pedidos recentes" columns={recentColumns} rows={filteredOrders.slice(0, 5)} getRowId={(order) => order.id} emptyMessage="Nenhum pedido para os filtros selecionados" />
+          <DataTable ariaLabel="Pedidos recentes" columns={recentColumns} rows={[...filteredOrders].reverse().slice(0, 5)} getRowId={(order) => order.id} emptyMessage="Nenhum pedido para os filtros selecionados" />
         </section>
         <section className="dashboard-panel"><OrderStatusChart values={statusValues} /></section>
       </div>
@@ -127,6 +144,6 @@ export function DashboardPage() {
           </div>
         </section>
       )}
-    </main>
+    </section>
   );
 }
