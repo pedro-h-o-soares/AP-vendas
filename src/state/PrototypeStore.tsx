@@ -16,6 +16,7 @@ import {
   sampleSettlements,
   sampleUsers,
 } from "../data/sampleData";
+import { toLocalISODate } from "../domain/localDate";
 import type {
   Check,
   ISODate,
@@ -181,7 +182,7 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   };
 
   const createIncident = (input: IncidentInput): Incident => {
-    const openedAt = new Date().toISOString().slice(0, 10) as Incident["openedAt"];
+    const openedAt = toLocalISODate();
     const incident: Incident = {
       ...input,
       id: nextId("incident"),
@@ -197,10 +198,18 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
       status: "incident",
       incidentIds: [...(order.incidentIds ?? []), incident.id],
     };
+    const orderEvent: OrderTimelineEvent = {
+      id: nextId("order-event"),
+      orderId: order.id,
+      date: openedAt,
+      title: "Ocorrência registrada",
+      detail: incident.title,
+    };
     setDemo((current) => ({
       ...current,
       incidents: [...current.incidents, incident],
       orders: replaceOrder(current.orders, changedOrder),
+      orderTimelineEvents: [...current.orderTimelineEvents, orderEvent],
     }));
     return clone(incident);
   };
@@ -233,7 +242,7 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   const contactIncidentSupplier = (incidentId: string): Incident => {
     const currentIncident = demo.incidents.find(({ id }) => id === incidentId);
     if (!currentIncident) throw new Error(`Incident not found: ${incidentId}`);
-    const date = new Date().toISOString().slice(0, 10) as Incident["openedAt"];
+    const date = toLocalISODate();
     const incident: Incident = {
       ...currentIncident,
       status: "awaiting-supplier",

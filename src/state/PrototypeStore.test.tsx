@@ -67,6 +67,79 @@ describe("PrototypeStore", () => {
     );
   });
 
+  it("records every delivery invariant and the integrated order timeline", () => {
+    const { result } = renderHook(() => usePrototypeStore(), { wrapper });
+    const order = result.current.orders.find(({ shipment }) => Boolean(shipment))!;
+
+    act(() => {
+      expect(result.current.recordDelivery(order.shipment!.id, "2026-07-16")).toMatchObject({
+        deliveredAt: "2026-07-16",
+        unloadingConfirmed: true,
+        materialCheck: "matched",
+      });
+    });
+
+    expect(result.current.orders.find(({ id }) => id === order.id)).toMatchObject({
+      status: "delivered",
+      shipment: {
+        deliveredAt: "2026-07-16",
+        unloadingConfirmed: true,
+        materialCheck: "matched",
+      },
+    });
+    expect(result.current.orderTimelineEvents).toContainEqual(expect.objectContaining({
+      orderId: order.id,
+      date: "2026-07-16",
+      title: "Entrega confirmada",
+    }));
+  });
+
+  it("links incident timelines without removing the shipment phase evidence", () => {
+    const { result } = renderHook(() => usePrototypeStore(), { wrapper });
+    const order = result.current.orders.find(({ shipment }) => Boolean(shipment))!;
+    let incidentId = "";
+
+    act(() => {
+      const incident = result.current.createIncident({
+        orderId: order.id,
+        shipmentId: order.shipment!.id,
+        clientName: order.clientName,
+        supplierName: order.supplierName,
+        title: "Produto incorreto",
+        description: "Produto recebido não corresponde ao pedido",
+        type: "wrong-product",
+      });
+      incidentId = incident.id;
+      expect(incident).toMatchObject({ status: "open" });
+      expect(incident.timeline).toContainEqual(expect.objectContaining({ description: "Ocorrência registrada" }));
+    });
+
+    expect(result.current.orders.find(({ id }) => id === order.id)).toMatchObject({
+      status: "incident",
+      incidentIds: expect.arrayContaining([incidentId]),
+      shipment: { id: order.shipment!.id, shippedAt: order.shipment!.shippedAt },
+    });
+    expect(result.current.orderTimelineEvents).toContainEqual(expect.objectContaining({
+      orderId: order.id,
+      title: "Ocorrência registrada",
+      detail: "Produto incorreto",
+    }));
+
+    act(() => {
+      expect(result.current.contactIncidentSupplier(incidentId)).toMatchObject({
+        status: "awaiting-supplier",
+      });
+    });
+
+    expect(result.current.incidents.find(({ id }) => id === incidentId)?.timeline).toContainEqual(
+      expect.objectContaining({ description: "Fornecedor acionado" }),
+    );
+    expect(result.current.orderTimelineEvents).toContainEqual(expect.objectContaining({
+      orderId: order.id,
+      title: "Fornecedor acionado",
+    }));
+  });
+
   it("records payments and postal shipments in memory", () => {
     const { result } = renderHook(() => usePrototypeStore(), { wrapper });
     const orderId = result.current.orders[0].id;

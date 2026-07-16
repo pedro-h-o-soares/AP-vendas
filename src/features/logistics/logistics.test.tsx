@@ -20,6 +20,30 @@ function DeliveryHarness() {
   return shipment ? <DeliveryForm shipment={shipment} /> : null;
 }
 
+function IncidentTransitHarness() {
+  const { createIncident, orders } = usePrototypeStore();
+  const order = orders.find(({ id }) => id === "order-brasil-flora-3824")!;
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => createIncident({
+          orderId: order.id,
+          shipmentId: order.shipment?.id,
+          clientName: order.clientName,
+          supplierName: order.supplierName,
+          title: "Item faltante",
+          description: "Item faltante no desembarque",
+          type: "missing-item",
+        })}
+      >
+        Criar ocorrência em trânsito
+      </button>
+      <LogisticsPage />
+    </>
+  );
+}
+
 async function renderWithSession(page: ReactNode, role: Role = "admin") {
   const user = userEvent.setup();
   render(
@@ -71,4 +95,12 @@ it("keeps logistics mutations unavailable without edit-logistics", async () => {
 
   expect(screen.queryByRole("button", { name: /confirmar entrega/i })).not.toBeInTheDocument();
   expect(screen.getByText(/perfil sem permissão para alterar a entrega/i)).toBeVisible();
+});
+
+it("keeps a shipped load in transit after an incident changes the order status", async () => {
+  const user = await renderWithSession(<IncidentTransitHarness />);
+  await user.click(screen.getByRole("button", { name: /criar ocorrência em trânsito/i }));
+
+  const row = screen.getByRole("row", { name: /101 comercio de madeiras/i });
+  expect(within(row).getByText("Em trânsito")).toBeVisible();
 });

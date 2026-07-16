@@ -7,6 +7,7 @@ import { DataTable, type DataTableColumn } from "../../components/DataTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import type { OrderItem, OrderStatus, OrderTimelineEvent } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
+import { toLocalISODate } from "../../domain/localDate";
 import { OrderTimeline } from "./OrderTimeline";
 import { orderStatusLabels, orderStatusTone } from "./orderStatus";
 
@@ -51,7 +52,7 @@ export function OrderDetailPage() {
     if (!pendingStatus) return;
     updateOrderStatus(order.id, pendingStatus);
     const label = orderStatusLabels[pendingStatus];
-    appendOrderTimelineEvent({ orderId: order.id, date: new Date().toISOString().slice(0, 10), title: `Status alterado para ${label.toLocaleLowerCase("pt-BR")}` });
+    appendOrderTimelineEvent({ orderId: order.id, date: toLocalISODate(), title: `Status alterado para ${label.toLocaleLowerCase("pt-BR")}` });
     setPendingStatus(undefined);
   };
 

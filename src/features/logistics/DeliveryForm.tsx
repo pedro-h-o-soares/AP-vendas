@@ -2,14 +2,13 @@ import { useState } from "react";
 import { useAuth } from "../../auth/AuthContext";
 import { can } from "../../auth/permissions";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
-import type { ISODate, Shipment } from "../../domain/types";
+import { toLocalISODate } from "../../domain/localDate";
+import type { Shipment } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
 
 interface DeliveryFormProps {
   shipment: Shipment;
 }
-
-const today = () => new Date().toISOString().slice(0, 10) as ISODate;
 
 export function DeliveryForm({ shipment }: DeliveryFormProps) {
   const { user } = useAuth();
@@ -41,7 +40,7 @@ export function DeliveryForm({ shipment }: DeliveryFormProps) {
         open={confirming}
         onCancel={() => setConfirming(false)}
         onConfirm={() => {
-          recordDelivery(shipment.id, today());
+          recordDelivery(shipment.id, toLocalISODate());
           setConfirming(false);
           setSaved(true);
         }}

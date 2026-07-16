@@ -7,7 +7,7 @@ import type { Order } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
 import { ShipmentDrawer } from "./ShipmentDrawer";
 
-const status = (order: Order) => order.shipment?.deliveredAt ? "Entregue" : order.status === "in-transit" ? "Em trânsito" : "Embarque informado";
+const status = (order: Order) => order.shipment?.deliveredAt ? "Entregue" : order.shipment?.shippedAt ? "Em trânsito" : "Embarque informado";
 
 export function LogisticsPage() {
   const { orders } = usePrototypeStore();
