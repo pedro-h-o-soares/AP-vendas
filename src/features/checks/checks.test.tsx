@@ -38,13 +38,23 @@ async function renderWithSession(page: ReactNode, role: Role = "finance") {
 }
 
 function PostalHarness() {
-  const { postalShipments } = usePrototypeStore();
+  const { checks, orders, postalShipments, resetDemo } = usePrototypeStore();
+  const check = checks.find(({ id }) => id === sampleCheck.id)!;
+  const linkedPostal = postalShipments.find(({ id }) => id === check.postalShipmentId);
+  const order = orders.find(({ id }) => id === check.orderId)!;
   return (
     <>
       <PostalShipmentForm checkId={sampleCheck.id} />
       <output aria-label="Quantidade de postagens">{postalShipments.length}</output>
       <output aria-label="Último rastreio">{postalShipments.at(-1)?.trackingCode}</output>
       <output aria-label="Último status">{postalShipments.at(-1)?.status}</output>
+      <output aria-label="Última diferença">{postalShipments.at(-1)?.difference}</output>
+      <output aria-label="Último pago por">{postalShipments.at(-1)?.paymentBy}</output>
+      <output aria-label="Último responsável">{postalShipments.at(-1)?.responsible}</output>
+      <output aria-label="Postagem encontrada a partir do cheque">{linkedPostal?.trackingCode}</output>
+      <output aria-label="Cheque vinculado à postagem">{linkedPostal?.checkIds.includes(check.id) ? "sim" : "não"}</output>
+      <output aria-label="Postagem vinculada ao pedido">{check.postalShipmentId && order.postalShipmentIds?.includes(check.postalShipmentId) ? "sim" : "não"}</output>
+      <button type="button" onClick={resetDemo}>Restaurar demonstração</button>
     </>
   );
 }
@@ -79,6 +89,18 @@ describe("detalhe do cheque e postagem", () => {
     expect(service).toHaveAttribute("aria-invalid", "true");
   });
 
+  it("foca o destinatário quando o serviço já foi selecionado", async () => {
+    const user = await renderWithSession(<PostalShipmentForm checkId={sampleCheck.id} />);
+    const recipient = screen.getByLabelText(/destinatário/i);
+    await user.selectOptions(screen.getByLabelText(/serviço postal/i), "pac");
+
+    await user.click(screen.getByRole("button", { name: /simular postagem/i }));
+
+    expect(recipient).toHaveFocus();
+    expect(recipient).toHaveAttribute("aria-invalid", "true");
+    expect(screen.queryByText(/selecione o serviço/i)).not.toBeInTheDocument();
+  });
+
   it("simula a postagem com rastreio e dados financeiros somente na sessão", async () => {
     const user = await renderWithSession(<PostalHarness />);
     expect(screen.getByLabelText(/quantidade de postagens/i)).toHaveTextContent("1");
@@ -91,6 +113,10 @@ describe("detalhe do cheque e postagem", () => {
     await user.type(screen.getByLabelText(/^fatura$/i), "FAT-6217");
     await user.type(screen.getByLabelText(/valor pago/i), "20");
     await user.type(screen.getByLabelText(/valor a receber/i), "28,90");
+    await user.clear(screen.getByLabelText(/^pago por$/i));
+    await user.type(screen.getByLabelText(/^pago por$/i), "OGURA REP");
+    await user.clear(screen.getByLabelText(/^responsável$/i));
+    await user.type(screen.getByLabelText(/^responsável$/i), "CLIENTE");
     await user.type(screen.getByLabelText(/observações/i), "Cheque protegido e conferido");
     await user.click(screen.getByRole("button", { name: /simular postagem/i }));
 
@@ -98,7 +124,26 @@ describe("detalhe do cheque e postagem", () => {
     expect(screen.getByLabelText(/quantidade de postagens/i)).toHaveTextContent("2");
     expect(screen.getByLabelText(/último rastreio/i)).toHaveTextContent(/^OG\d{9}BR$/);
     expect(screen.getByLabelText(/último status/i)).toHaveTextContent("prepared");
+    expect(screen.getByLabelText(/último pago por/i)).toHaveTextContent("OGURA REP");
+    expect(screen.getByLabelText(/último responsável/i)).toHaveTextContent("CLIENTE");
+    expect(screen.getByLabelText(/postagem encontrada a partir do cheque/i)).toHaveTextContent(/^OG\d{9}BR$/);
+    expect(screen.getByLabelText(/cheque vinculado à postagem/i)).toHaveTextContent("sim");
+    expect(screen.getByLabelText(/postagem vinculada ao pedido/i)).toHaveTextContent("sim");
     expect(screen.getByText(/R\$\s*8,90/)).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: /restaurar demonstração/i }));
+    expect(screen.getByLabelText(/quantidade de postagens/i)).toHaveTextContent("1");
+    expect(screen.getByLabelText(/postagem encontrada a partir do cheque/i)).toBeEmptyDOMElement();
+    expect(screen.getByLabelText(/cheque vinculado à postagem/i)).toHaveTextContent("não");
+  });
+
+  it("não grava diferença quando os valores financeiros não foram informados", async () => {
+    const user = await renderWithSession(<PostalHarness />);
+    await user.selectOptions(screen.getByLabelText(/serviço postal/i), "sedex");
+    await user.type(screen.getByLabelText(/destinatário/i), "MADEPOL");
+    await user.click(screen.getByRole("button", { name: /simular postagem/i }));
+
+    expect(screen.getByLabelText(/última diferença/i)).toBeEmptyDOMElement();
   });
 });
 
@@ -115,8 +160,17 @@ describe("página de Cheques e Correios", () => {
     const user = await renderWithSession(<ChecksPage />);
 
     expect(screen.getByRole("tab", { name: "Cheques" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Cheques" })).not.toHaveAttribute("hidden");
+    const checksPanel = document.getElementById("checks-panel-checks")!;
+    const postalPanel = document.getElementById("checks-panel-postal")!;
+    expect(postalPanel).toHaveAttribute("aria-labelledby", "checks-tab-postal");
+    expect(postalPanel).toHaveAttribute("hidden");
     expect(screen.getByText("MADEIRAS BETINI")).toBeVisible();
     await user.click(screen.getByRole("tab", { name: "Correios" }));
+
+    expect(checksPanel).toHaveAttribute("aria-labelledby", "checks-tab-checks");
+    expect(checksPanel).toHaveAttribute("hidden");
+    expect(screen.getByRole("tabpanel", { name: "Correios" })).not.toHaveAttribute("hidden");
 
     const pignaton = screen.getByRole("article", { name: /postagem para PIGNATON/i });
     [
@@ -124,6 +178,8 @@ describe("página de Cheques e Correios", () => {
       "188 277 41", "Fatura", "Postado", "Previsão", "Entrega",
       "Valor pago", "Valor a receber", "Diferença", "Observações",
     ].forEach((value) => expect(within(pignaton).getByText(value)).toBeVisible());
+    expect(within(pignaton).getByText("Pago por").parentElement).toHaveTextContent("OGURA REP");
+    expect(within(pignaton).getByText("Responsável").parentElement).toHaveTextContent("CLIENTE");
     expect(within(pignaton).getByText(/R\$\s*16,38/)).toBeVisible();
   });
 

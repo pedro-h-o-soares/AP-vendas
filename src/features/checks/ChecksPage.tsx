@@ -68,32 +68,32 @@ export function ChecksPage() {
       <div className="checks-tabs" role="tablist" aria-label="Cheques e Correios">
         {tabs.map((item, index) => <button aria-controls={`checks-panel-${item.value}`} aria-selected={tab === item.value} id={`checks-tab-${item.value}`} key={item.value} onClick={() => changeTab(item.value)} onKeyDown={(event) => handleTabKeyDown(event, index)} role="tab" tabIndex={tab === item.value ? 0 : -1} type="button">{item.label}</button>)}
       </div>
-      <div aria-labelledby={`checks-tab-${tab}`} id={`checks-panel-${tab}`} role="tabpanel" tabIndex={0}>
-        {tab === "checks" ? (
-          <section className="orders-table-panel" aria-label="Cheques recebidos">
-            <DataTable ariaLabel="Cheques recebidos" columns={columns} rows={checks} getRowId={(check) => check.id} emptyMessage="Nenhum cheque registrado" rowAction={{ label: (check) => `Ver cheque ${check.number}`, onClick: (check) => setSelectedId(check.id) }} />
-          </section>
-        ) : (
-          <div className="postal-list">
-            {postalShipments.map((shipment) => (
-              <article aria-label={`Postagem para ${shipment.recipient ?? "destinatário não informado"}`} className="postal-card" key={shipment.id}>
-                <header><div><span>{shipment.carrier}</span><h2>{shipment.recipient ?? "Destinatário não informado"}</h2></div><StatusBadge tone={postalTones[shipment.status]}>{postalLabels[shipment.status]}</StatusBadge></header>
-                <dl className="postal-facts">
-                  <Fact label="Serviço" value={shipment.service} /><Fact label="Código postal" value={shipment.postalCode} />
-                  <Fact label="Rastreio" value={shipment.trackingCode} /><Fact label="Custo" value={shipment.cost === undefined ? undefined : currency.format(shipment.cost)} />
-                  <Fact label="Fatura" value={shipment.invoice} /><Fact label="Postado" value={shipment.postedAt} />
-                  <Fact label="Previsão" value={shipment.expectedDeliveryAt} /><Fact label="Entrega" value={shipment.deliveredAt} />
-                  <Fact label="Valor pago" value={shipment.paidAmount === undefined ? undefined : currency.format(shipment.paidAmount)} />
-                  <Fact label="Valor a receber" value={shipment.receivableAmount === undefined ? undefined : currency.format(shipment.receivableAmount)} />
-                  <Fact label="Diferença" value={shipment.difference === undefined ? undefined : currency.format(shipment.difference)} />
-                  <Fact label="Responsável" value={shipment.responsible} /><Fact label="Observações" value={shipment.notes} />
-                </dl>
-                {canManage && shipment.status === "prepared" && <button className="button-primary" onClick={() => setPostalStatus(shipment, "posted")} type="button">Marcar como postado</button>}
-                {canManage && (shipment.status === "posted" || shipment.status === "in-transit") && <button className="button-primary" onClick={() => setPostalStatus(shipment, "delivered")} type="button">Marcar como entregue</button>}
-              </article>
-            ))}
-          </div>
-        )}
+      <div aria-labelledby="checks-tab-checks" hidden={tab !== "checks"} id="checks-panel-checks" role="tabpanel" tabIndex={tab === "checks" ? 0 : -1}>
+        <section className="orders-table-panel" aria-label="Cheques recebidos">
+          <DataTable ariaLabel="Cheques recebidos" columns={columns} rows={checks} getRowId={(check) => check.id} emptyMessage="Nenhum cheque registrado" rowAction={{ label: (check) => `Ver cheque ${check.number}`, onClick: (check) => setSelectedId(check.id) }} />
+        </section>
+      </div>
+      <div aria-labelledby="checks-tab-postal" hidden={tab !== "postal"} id="checks-panel-postal" role="tabpanel" tabIndex={tab === "postal" ? 0 : -1}>
+        <div className="postal-list">
+          {postalShipments.map((shipment) => (
+            <article aria-label={`Postagem para ${shipment.recipient ?? "destinatário não informado"}`} className="postal-card" key={shipment.id}>
+              <header><div><span>{shipment.carrier}</span><h2>{shipment.recipient ?? "Destinatário não informado"}</h2></div><StatusBadge tone={postalTones[shipment.status]}>{postalLabels[shipment.status]}</StatusBadge></header>
+              <dl className="postal-facts">
+                <Fact label="Serviço" value={shipment.service} /><Fact label="Código postal" value={shipment.postalCode} />
+                <Fact label="Rastreio" value={shipment.trackingCode} /><Fact label="Custo" value={shipment.cost === undefined ? undefined : currency.format(shipment.cost)} />
+                <Fact label="Fatura" value={shipment.invoice} /><Fact label="Postado" value={shipment.postedAt} />
+                <Fact label="Previsão" value={shipment.expectedDeliveryAt} /><Fact label="Entrega" value={shipment.deliveredAt} />
+                <Fact label="Valor pago" value={shipment.paidAmount === undefined ? undefined : currency.format(shipment.paidAmount)} />
+                <Fact label="Valor a receber" value={shipment.receivableAmount === undefined ? undefined : currency.format(shipment.receivableAmount)} />
+                <Fact label="Diferença" value={shipment.difference === undefined ? undefined : currency.format(shipment.difference)} />
+                <Fact label="Pago por" value={shipment.paymentBy} /><Fact label="Responsável" value={shipment.responsible} />
+                <Fact label="Observações" value={shipment.notes} />
+              </dl>
+              {canManage && shipment.status === "prepared" && <button className="button-primary" onClick={() => setPostalStatus(shipment, "posted")} type="button">Marcar como postado</button>}
+              {canManage && (shipment.status === "posted" || shipment.status === "in-transit") && <button className="button-primary" onClick={() => setPostalStatus(shipment, "delivered")} type="button">Marcar como entregue</button>}
+            </article>
+          ))}
+        </div>
       </div>
       {selected && <CheckDrawer check={selected} onClose={() => setSelectedId(undefined)}><PostalShipmentForm checkId={selected.id} /></CheckDrawer>}
     </section>

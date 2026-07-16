@@ -358,6 +358,7 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
       ...current,
       postalShipments: [...current.postalShipments, shipment],
       orders: replaceOrder(current.orders, changedOrder),
+      checks: current.checks.map((check) => input.checkIds.includes(check.id) ? { ...check, postalShipmentId: shipment.id } : check),
     }));
     return clone(shipment);
   };

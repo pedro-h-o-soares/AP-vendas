@@ -24,6 +24,7 @@ export function PostalShipmentForm({ checkId }: { checkId: string }) {
   const { checks, postalShipments, createPostalShipment } = usePrototypeStore();
   const check = checks.find(({ id }) => id === checkId);
   const serviceRef = useRef<HTMLSelectElement>(null);
+  const recipientRef = useRef<HTMLInputElement>(null);
   const [service, setService] = useState("");
   const [recipient, setRecipient] = useState("");
   const [city, setCity] = useState("");
@@ -32,6 +33,7 @@ export function PostalShipmentForm({ checkId }: { checkId: string }) {
   const [invoice, setInvoice] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
   const [receivableAmount, setReceivableAmount] = useState("");
+  const [paymentBy, setPaymentBy] = useState("");
   const [responsible, setResponsible] = useState(check?.responsible ?? "OGURA REP");
   const [notes, setNotes] = useState("");
   const [serviceError, setServiceError] = useState("");
@@ -39,10 +41,14 @@ export function PostalShipmentForm({ checkId }: { checkId: string }) {
   const [submittedDifference, setSubmittedDifference] = useState<number>();
   const [submitted, setSubmitted] = useState(false);
   const canManage = Boolean(user && can(user.role, "manage-checks"));
-  const difference = useMemo(
-    () => (parseMoney(receivableAmount) ?? 0) - (parseMoney(paidAmount) ?? 0),
+  const difference = useMemo(() => {
+    const paid = parseMoney(paidAmount);
+    const receivable = parseMoney(receivableAmount);
+    return paid === undefined || receivable === undefined ? undefined : receivable - paid;
+  },
     [paidAmount, receivableAmount],
   );
+  const displayedDifference = submitted ? submittedDifference : difference;
 
   if (!check) return <p className="permission-note">Cheque não encontrado.</p>;
 
@@ -54,7 +60,8 @@ export function PostalShipmentForm({ checkId }: { checkId: string }) {
     setServiceError(nextServiceError);
     setRecipientError(nextRecipientError);
     if (nextServiceError || nextRecipientError) {
-      serviceRef.current?.focus();
+      if (nextServiceError) serviceRef.current?.focus();
+      else recipientRef.current?.focus();
       return;
     }
     const now = new Date();
@@ -76,7 +83,7 @@ export function PostalShipmentForm({ checkId }: { checkId: string }) {
       paidAmount: parseMoney(paidAmount),
       receivableAmount: parseMoney(receivableAmount),
       difference,
-      paymentBy: responsible.trim() || undefined,
+      paymentBy: paymentBy.trim() || undefined,
       responsible: responsible.trim() || undefined,
       notes: notes.trim() || undefined,
     });
@@ -96,7 +103,7 @@ export function PostalShipmentForm({ checkId }: { checkId: string }) {
           </select>
         </FormField>
         <FormField label="Destinatário" error={recipientError}>
-          <input value={recipient} onChange={(event) => { setRecipient(event.target.value); setRecipientError(""); setSubmitted(false); }} required />
+          <input ref={recipientRef} value={recipient} onChange={(event) => { setRecipient(event.target.value); setRecipientError(""); setSubmitted(false); }} required />
         </FormField>
         <FormField label="Cidade"><input value={city} onChange={(event) => setCity(event.target.value)} /></FormField>
         <FormField label="Estado">
@@ -109,10 +116,11 @@ export function PostalShipmentForm({ checkId }: { checkId: string }) {
         <FormField label="Fatura"><input value={invoice} onChange={(event) => setInvoice(event.target.value)} /></FormField>
         <FormField label="Valor pago"><input inputMode="decimal" value={paidAmount} onChange={(event) => setPaidAmount(event.target.value)} /></FormField>
         <FormField label="Valor a receber"><input inputMode="decimal" value={receivableAmount} onChange={(event) => setReceivableAmount(event.target.value)} /></FormField>
+        <FormField label="Pago por"><input value={paymentBy} onChange={(event) => setPaymentBy(event.target.value)} /></FormField>
         <FormField label="Responsável"><input value={responsible} onChange={(event) => setResponsible(event.target.value)} /></FormField>
         <FormField label="Observações"><textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} /></FormField>
       </div>
-      <div className="postal-form__difference"><span>Diferença</span><strong>{currency.format(submitted ? submittedDifference ?? difference : difference)}</strong></div>
+      <div className="postal-form__difference"><span>Diferença</span><strong>{displayedDifference === undefined ? "—" : currency.format(displayedDifference)}</strong></div>
       {canManage ? <button className="button-primary" type="submit">Simular postagem</button> : <p className="permission-note">Perfil sem permissão para simular postagens.</p>}
       {submitted && <p className="session-notice" role="status">Postagem preparada somente nesta sessão.</p>}
     </form>
