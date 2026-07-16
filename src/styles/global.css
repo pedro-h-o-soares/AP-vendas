@@ -161,7 +161,7 @@ textarea:focus-visible {
 .order-tab-panel {
   min-width: 0;
   margin-top: 1rem;
-  overflow-x: hidden;
+  overflow-x: visible;
   padding: 1.2rem;
   border: 1px solid rgba(111, 88, 217, 0.1);
   border-radius: var(--radius-card);
@@ -704,7 +704,7 @@ textarea:focus-visible {
 .app-shell__content {
   min-width: 0;
   padding: clamp(1rem, 2.5vw, 2.5rem);
-  overflow-x: hidden;
+  overflow-x: visible;
   border-radius: var(--radius-panel);
   background: #fff;
   background: var(--surface-glass);

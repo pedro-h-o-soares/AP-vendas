@@ -53,6 +53,69 @@ const expectInsideViewport = async (page: Page, selector: ReturnType<Page["locat
   expect(box!.x + box!.width).toBeLessThanOrEqual(viewport!.width);
 };
 
+const expectIntentionalTableScroller = async (page: Page, table: ReturnType<Page["locator"]>) => {
+  const scroller = table.locator("xpath=..")
+  const firstCell = table.locator("tbody tr").first().locator("td").first();
+  const lastCell = table.locator("tbody tr").first().locator("td").last();
+
+  await expect(scroller).toHaveCSS("overflow-x", "auto");
+  const geometry = await scroller.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(geometry.scrollWidth).toBeGreaterThanOrEqual(geometry.clientWidth);
+
+  await scroller.evaluate((element) => { element.scrollLeft = 0; });
+  await expect(firstCell).toBeInViewport();
+  const firstGeometry = await scroller.evaluate((container) => {
+    const element = container.querySelector<HTMLElement>("tbody tr:first-child td:first-child")!;
+    const cellRect = element.getBoundingClientRect();
+    const scrollerRect = container.getBoundingClientRect();
+    return { cell: { left: cellRect.left, right: cellRect.right }, scroller: { left: scrollerRect.left, right: scrollerRect.right } };
+  });
+  expect(firstGeometry.cell.left, JSON.stringify(firstGeometry)).toBeGreaterThanOrEqual(firstGeometry.scroller.left - 1);
+  expect(firstGeometry.cell.right, JSON.stringify(firstGeometry)).toBeLessThanOrEqual(firstGeometry.scroller.right + 1);
+  await scroller.evaluate((element) => { element.scrollLeft = element.scrollWidth; });
+  await expect(lastCell).toBeInViewport();
+  const lastGeometry = await scroller.evaluate((container) => {
+    const element = container.querySelector<HTMLElement>("tbody tr:first-child td:last-child")!;
+    const cellRect = element.getBoundingClientRect();
+    const scrollerRect = container.getBoundingClientRect();
+    return { cell: { left: cellRect.left, right: cellRect.right }, scroller: { left: scrollerRect.left, right: scrollerRect.right } };
+  });
+  expect(lastGeometry.cell.left, JSON.stringify(lastGeometry)).toBeGreaterThanOrEqual(lastGeometry.scroller.left - 1);
+  expect(lastGeometry.cell.right, JSON.stringify(lastGeometry)).toBeLessThanOrEqual(lastGeometry.scroller.right + 1);
+};
+
+const expectNoHiddenOverflowMask = async (page: Page) => {
+  const hiddenMasks = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>("body *"))
+    .filter((element) => {
+      const style = getComputedStyle(element);
+      if (style.display === "none" || style.visibility === "hidden" || style.overflowX !== "hidden") return false;
+      const rect = element.getBoundingClientRect();
+      const visuallyHidden = rect.width <= 1 || rect.height <= 1 || style.clip !== "auto" || style.clipPath !== "none";
+      return !visuallyHidden && element.scrollWidth > element.clientWidth + 1;
+    })
+    .map((element) => ({
+      className: String(element.className),
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+      tag: element.tagName,
+    })));
+  expect(hiddenMasks, JSON.stringify(hiddenMasks)).toEqual([]);
+};
+
+const expectDrawerControlsReachable = async (drawer: ReturnType<Page["locator"]>) => {
+  await expect(drawer).toHaveCSS("overflow-y", "auto");
+  const firstControl = drawer.locator(".drawer__content select, .drawer__content input, .drawer__content textarea, .drawer__content button").first();
+  const lastControl = drawer.locator("select, input, textarea, button").last();
+  await drawer.evaluate((element) => { element.scrollTop = 0; });
+  await expect(firstControl).toBeInViewport();
+  await lastControl.scrollIntoViewIfNeeded();
+  await expect(lastControl).toBeInViewport();
+  await expect(drawer).not.toHaveCSS("overflow-x", "hidden");
+};
+
 test.describe("responsive shell", () => {
   for (const viewport of [
     { name: "desktop", width: 1440, height: 900 },
@@ -69,12 +132,17 @@ test.describe("responsive shell", () => {
       const collapse = page.getByRole("button", { name: "Recolher menu" });
       await expectTouchTarget(collapse);
       await page.getByRole("link", { name: "Pedidos", exact: true }).click();
-      await expect(page.getByRole("table", { name: "Pedidos" })).toBeVisible();
+      const ordersTable = page.getByRole("table", { name: "Pedidos" });
+      await expect(ordersTable).toBeVisible();
+      await expectIntentionalTableScroller(page, ordersTable);
+      await expectNoHiddenOverflowMask(page);
       await expectNoHorizontalOverflow(page);
 
       await page.getByRole("button", { name: "Novo orçamento" }).click();
       const drawer = page.getByRole("dialog", { name: "Novo orçamento" });
       await expectInsideViewport(page, drawer);
+      await expectDrawerControlsReachable(drawer);
+      await expectNoHiddenOverflowMask(page);
       await expectNoHorizontalOverflow(page);
       const close = drawer.getByRole("button", { name: "Fechar Novo orçamento" });
       await expectTouchTarget(close);
@@ -119,11 +187,29 @@ test.describe("responsive shell", () => {
     await expect(mobileTable).toBeVisible();
     await expect(mobileTable.locator("tbody tr").first()).toHaveCSS("display", "block");
     await expect(mobileTable.locator("tbody td").first()).toHaveCSS("display", "grid");
+    const labelledCells = mobileTable.locator("tbody tr").first().locator("td[data-label]");
+    await expect(labelledCells).toHaveCount(7);
+    for (const cell of await labelledCells.all()) {
+      await expect(cell).toHaveAttribute("data-label", /.+/);
+      expect(await cell.evaluate((element) => getComputedStyle(element, "::before").content)).not.toBe("none");
+      await expect(cell).not.toBeEmpty();
+      await expectInsideViewport(page, cell);
+      const contained = await cell.evaluate((element) => {
+        const cellRect = element.getBoundingClientRect();
+        const panelRect = element.closest<HTMLElement>(".orders-table-panel")!.getBoundingClientRect();
+        return cellRect.left >= panelRect.left && cellRect.right <= panelRect.right;
+      });
+      expect(contained).toBe(true);
+    }
+    await expectInsideViewport(page, mobileTable.locator("tbody tr").first().getByRole("button", { name: "Ver pedido" }));
+    await expectNoHiddenOverflowMask(page);
     await expectNoHorizontalOverflow(page);
 
     await page.getByRole("button", { name: "Novo orçamento" }).click();
     const drawer = page.getByRole("dialog", { name: "Novo orçamento" });
     await expectInsideViewport(page, drawer);
+    await expectDrawerControlsReachable(drawer);
+    await expectNoHiddenOverflowMask(page);
     await expectNoHorizontalOverflow(page);
     const close = drawer.getByRole("button", { name: "Fechar Novo orçamento" });
     await expectTouchTarget(close);

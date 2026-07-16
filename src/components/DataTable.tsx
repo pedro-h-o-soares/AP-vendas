@@ -44,7 +44,7 @@ export function DataTable<T>({
                 {column.header}
               </th>
             ))}
-            {rowAction && <th scope="col"><span className="sr-only">Ações</span></th>}
+            {rowAction && <th scope="col" aria-label="Ações" />}
           </tr>
         </thead>
         <tbody>
