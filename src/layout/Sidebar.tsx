@@ -6,6 +6,9 @@ import {
   Truck,
   WalletCards,
 } from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
+import { can, type Permission } from "../auth/permissions";
 
 export interface SidebarProps {
   collapsed: boolean;
@@ -13,14 +16,18 @@ export interface SidebarProps {
 }
 
 const destinations = [
-  { label: "Dashboard", href: "#dashboard", icon: LayoutDashboard },
-  { label: "Pedidos", href: "#pedidos", icon: ShoppingCart },
-  { label: "Logística", href: "#logistica", icon: Truck },
-  { label: "Financeiro", href: "#financeiro", icon: WalletCards },
-] as const;
+  { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, permission: "view-dashboard" },
+  { label: "Pedidos", to: "/orders", icon: ShoppingCart, permission: "view-orders" },
+  { label: "Logística", to: "/logistics", icon: Truck, permission: "view-logistics" },
+  { label: "Financeiro", to: "/finance", icon: WalletCards, permission: "view-finance" },
+] satisfies { label: string; to: string; icon: typeof LayoutDashboard; permission: Permission }[];
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
+  const { user } = useAuth();
+  const visibleDestinations = user
+    ? destinations.filter(({ permission }) => can(user.role, permission))
+    : [];
 
   return (
     <nav
@@ -29,12 +36,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       data-collapsed={collapsed}
     >
       <div className="sidebar__header">
-        <a className="sidebar__brand" href="#dashboard" aria-label="Ogura Rep">
+        <NavLink className="sidebar__brand" to="/dashboard" aria-label="Ogura Rep">
           <span className="sidebar__brand-mark" aria-hidden="true">
             O
           </span>
           <span className="sidebar__brand-label">Ogura Rep</span>
-        </a>
+        </NavLink>
         <button
           aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
           className="sidebar__toggle"
@@ -46,17 +53,18 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
 
       <div className="sidebar__links">
-        {destinations.map(({ label, href, icon: Icon }, index) => (
-          <a
-            aria-current={index === 0 ? "page" : undefined}
-            className={`sidebar__link${index === 0 ? " sidebar__link--active" : ""}`}
-            href={href}
-            key={href}
+        {visibleDestinations.map(({ label, to, icon: Icon }) => (
+          <NavLink
+            className={({ isActive }) =>
+              `sidebar__link${isActive ? " sidebar__link--active" : ""}`
+            }
+            key={to}
             title={collapsed ? label : undefined}
+            to={to}
           >
             <Icon aria-hidden="true" size={21} />
             <span className="sidebar__link-label">{label}</span>
-          </a>
+          </NavLink>
         ))}
       </div>
     </nav>

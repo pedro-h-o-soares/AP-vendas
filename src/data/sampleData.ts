@@ -235,4 +235,6 @@ export const samplePostalShipments: PostalShipment[] = [
 ];
 export const sampleUsers: UserProfile[] = [
   { id: "user-admin", name: "Ogura Rep", email: "admin@ogurarep.local", role: "admin", active: true },
+  { id: "user-commercial", name: "Comercial", email: "comercial@ogurarep.local", role: "commercial", active: true },
+  { id: "user-finance", name: "Financeiro", email: "financeiro@ogurarep.local", role: "finance", active: true },
 ];

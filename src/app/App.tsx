@@ -1,10 +1,16 @@
-import { AppShell } from "../layout/AppShell";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "../auth/AuthContext";
+import { PrototypeStoreProvider } from "../state/PrototypeStore";
+import { AppRoutes } from "./routes";
 
 export function App() {
   return (
-    <AppShell>
-      <h1>Ogura Rep</h1>
-      <p>Protótipo sem gravação permanente</p>
-    </AppShell>
+    <BrowserRouter>
+      <PrototypeStoreProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </PrototypeStoreProvider>
+    </BrowserRouter>
   );
 }
