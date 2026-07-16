@@ -320,6 +320,136 @@ select:focus-visible {
   font-size: 0.76rem;
 }
 
+.logistics-detail {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.logistics-detail__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(111, 88, 217, 0.05);
+}
+
+.logistics-detail__heading span {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.logistics-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 0;
+}
+
+.logistics-facts div {
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid rgba(111, 88, 217, 0.08);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.logistics-facts dt {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.logistics-facts dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.delivery-form,
+.incident-panel,
+.incident-result {
+  padding: 1rem;
+  border: 1px solid rgba(111, 88, 217, 0.1);
+  border-radius: 1rem;
+  background: rgba(111, 88, 217, 0.05);
+}
+
+.delivery-form h3,
+.incident-result h3 {
+  margin-top: 0;
+}
+
+.delivery-form > p,
+.permission-note {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.incident-panel {
+  display: grid;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.incident-panel > label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.incident-panel select,
+.incident-form select,
+.incident-form textarea {
+  min-height: 2.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid rgba(111, 88, 217, 0.16);
+  border-radius: 0.85rem;
+  color: var(--color-ink);
+  background: rgba(255, 255, 255, 0.9);
+  font: inherit;
+}
+
+.incident-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.incident-form .form-field:nth-of-type(3),
+.incident-form > button {
+  grid-column: 1 / -1;
+}
+
+.incident-form > button {
+  justify-self: end;
+}
+
+.incident-timeline {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.incident-timeline li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 0.78rem;
+}
+
 .dashboard-section {
   margin-top: 2rem;
 }
@@ -804,7 +934,12 @@ select:focus-visible {
   .order-actions { justify-content: flex-start; }
   .detail-grid { grid-template-columns: 1fr; }
   .party-form,
-  .party-detail__facts { grid-template-columns: 1fr; }
+  .party-detail__facts,
+  .logistics-facts,
+  .incident-form { grid-template-columns: 1fr; }
+  .incident-form .form-field,
+  .incident-form > button { grid-column: 1; }
+  .incident-form > button { width: 100%; }
   .party-detail__list li { grid-template-columns: 1fr; }
 
   .data-table thead {

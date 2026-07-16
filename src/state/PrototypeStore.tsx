@@ -18,6 +18,7 @@ import {
 } from "../data/sampleData";
 import type {
   Check,
+  ISODate,
   Incident,
   Installment,
   Order,
@@ -28,6 +29,7 @@ import type {
   Payment,
   PostalShipment,
   Settlement,
+  Shipment,
   UserProfile,
 } from "../domain/types";
 
@@ -65,7 +67,9 @@ export interface PrototypeStore {
   convertQuoteToOrder: (quoteId: string, orderNumber: string) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Order;
   appendOrderTimelineEvent: (input: Omit<OrderTimelineEvent, "id">) => OrderTimelineEvent;
+  recordDelivery: (shipmentId: string, deliveredAt: ISODate) => Shipment;
   createIncident: (input: IncidentInput) => Incident;
+  contactIncidentSupplier: (incidentId: string) => Incident;
   recordPayment: (input: PaymentInput) => Payment;
   createPostalShipment: (input: PostalShipmentInput) => PostalShipment;
   resetDemo: () => void;
@@ -177,14 +181,15 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   };
 
   const createIncident = (input: IncidentInput): Incident => {
+    const openedAt = new Date().toISOString().slice(0, 10) as Incident["openedAt"];
     const incident: Incident = {
       ...input,
       id: nextId("incident"),
       type: input.type ?? "other",
       priority: input.priority ?? "medium",
       status: "open",
-      openedAt: new Date().toISOString().slice(0, 10) as Incident["openedAt"],
-      timeline: [],
+      openedAt,
+      timeline: [{ id: nextId("incident-event"), date: openedAt, description: "Ocorrência registrada" }],
     };
     const order = findOrder(input.orderId);
     const changedOrder: Order = {
@@ -196,6 +201,58 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
       ...current,
       incidents: [...current.incidents, incident],
       orders: replaceOrder(current.orders, changedOrder),
+    }));
+    return clone(incident);
+  };
+
+  const recordDelivery = (shipmentId: string, deliveredAt: ISODate): Shipment => {
+    const order = demo.orders.find(({ shipment }) => shipment?.id === shipmentId);
+    if (!order?.shipment) throw new Error(`Shipment not found: ${shipmentId}`);
+    const shipment: Shipment = {
+      ...order.shipment,
+      deliveredAt,
+      unloadingConfirmed: true,
+      materialCheck: "matched",
+    };
+    const changedOrder: Order = { ...order, shipment, status: "delivered" };
+    const event: OrderTimelineEvent = {
+      id: nextId("order-event"),
+      orderId: order.id,
+      date: deliveredAt,
+      title: "Entrega confirmada",
+      detail: "Desembarque e conferência do material registrados na sessão.",
+    };
+    setDemo((current) => ({
+      ...current,
+      orders: replaceOrder(current.orders, changedOrder),
+      orderTimelineEvents: [...current.orderTimelineEvents, event],
+    }));
+    return clone(shipment);
+  };
+
+  const contactIncidentSupplier = (incidentId: string): Incident => {
+    const currentIncident = demo.incidents.find(({ id }) => id === incidentId);
+    if (!currentIncident) throw new Error(`Incident not found: ${incidentId}`);
+    const date = new Date().toISOString().slice(0, 10) as Incident["openedAt"];
+    const incident: Incident = {
+      ...currentIncident,
+      status: "awaiting-supplier",
+      timeline: [
+        ...currentIncident.timeline,
+        { id: nextId("incident-event"), date, description: "Fornecedor acionado" },
+      ],
+    };
+    const orderEvent: OrderTimelineEvent = {
+      id: nextId("order-event"),
+      orderId: incident.orderId,
+      date,
+      title: "Fornecedor acionado",
+      detail: incident.title,
+    };
+    setDemo((current) => ({
+      ...current,
+      incidents: current.incidents.map((candidate) => candidate.id === incident.id ? incident : candidate),
+      orderTimelineEvents: [...current.orderTimelineEvents, orderEvent],
     }));
     return clone(incident);
   };
@@ -243,8 +300,10 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
         convertQuoteToOrder,
         updateOrderStatus,
         appendOrderTimelineEvent,
+        recordDelivery,
         updateParty,
         createIncident,
+        contactIncidentSupplier,
         recordPayment,
         createPostalShipment,
         resetDemo,

@@ -77,12 +77,28 @@ describe("responsive navigation", () => {
     expect(more).toHaveAttribute("aria-controls", menu.id);
     expect(within(menu).getByRole("menuitem", { name: "Clientes" })).toHaveAttribute("href", "/clientes");
     expect(within(menu).getByRole("menuitem", { name: "Fornecedores" })).toHaveAttribute("href", "/fornecedores");
+    expect(within(menu).getByRole("menuitem", { name: "Ocorrências" })).toHaveAttribute("href", "/ocorrencias");
     expect(within(menu).getByRole("menuitem", { name: "Relatórios" })).toHaveAttribute("href", "/reports");
     expect(within(menu).getByRole("menuitem", { name: "Clientes" })).toHaveFocus();
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("menu", { name: /mais destinos/i })).not.toBeInTheDocument();
     expect(more).toHaveFocus();
+  });
+
+  it("shows authorized logistics and incidents destinations in the sidebar", async () => {
+    const user = userEvent.setup();
+    render(
+      <Providers>
+        <SessionButton role="commercial" />
+        <Sidebar collapsed={false} onToggle={() => undefined} />
+      </Providers>,
+    );
+    await user.click(screen.getByRole("button", { name: /sessão commercial/i }));
+
+    const navigation = screen.getByRole("navigation", { name: /principal/i });
+    expect(within(navigation).getByRole("link", { name: "Logística" })).toHaveAttribute("href", "/logistica");
+    expect(within(navigation).getByRole("link", { name: "Ocorrências" })).toHaveAttribute("href", "/ocorrencias");
   });
 
   it("shows commercial party links but hides unauthorized overflow destinations", async () => {

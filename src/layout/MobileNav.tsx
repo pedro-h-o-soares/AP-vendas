@@ -13,13 +13,14 @@ import { can, type Permission } from "../auth/permissions";
 const primaryDestinations = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, permission: "view-dashboard" },
   { label: "Pedidos", to: "/pedidos", icon: ShoppingCart, permission: "view-orders" },
-  { label: "Logística", to: "/logistics", icon: Truck, permission: "view-logistics" },
+  { label: "Logística", to: "/logistica", icon: Truck, permission: "view-logistics" },
   { label: "Financeiro", to: "/finance", icon: WalletCards, permission: "view-finance" },
 ] satisfies { label: string; to: string; icon: typeof LayoutDashboard; permission: Permission }[];
 
 const overflowDestinations = [
   { label: "Clientes", to: "/clientes", permission: "view-parties" },
   { label: "Fornecedores", to: "/fornecedores", permission: "view-parties" },
+  { label: "Ocorrências", to: "/ocorrencias", permission: "view-logistics" },
   { label: "Cheques", to: "/checks", permission: "view-checks" },
   { label: "Acertos", to: "/settlements", permission: "view-settlements" },
   { label: "Relatórios", to: "/reports", permission: "view-reports" },

@@ -135,6 +135,8 @@ export interface Shipment {
   noteNumber?: string;
   invoiceNumber?: string;
   salesGuide?: string;
+  clientCopy?: string;
+  supplierCopy?: string;
   driverName?: string;
   route?: string;
   expectedDeliveryAt?: ISODate;
