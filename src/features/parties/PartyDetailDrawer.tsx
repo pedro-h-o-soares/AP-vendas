@@ -29,8 +29,9 @@ export function PartyDetailDrawer({ party, open, canEdit, onClose }: PartyDetail
   const orderIds = new Set(relatedOrders.map(({ id }) => id));
   const relatedShipments = relatedOrders.flatMap((order) => order.shipment ? [order.shipment] : []);
   const relatedIncidents = incidents.filter((incident) => orderIds.has(incident.orderId));
-  const relatedInstallments = installments.filter((installment) => orderIds.has(installment.orderId));
-  const relatedPayments = payments.filter((payment) => orderIds.has(payment.orderId));
+  const financialRecipient = party.kind === "client" ? "client" : "supplier";
+  const relatedInstallments = installments.filter((installment) => orderIds.has(installment.orderId) && installment.recipient === financialRecipient);
+  const relatedPayments = payments.filter((payment) => orderIds.has(payment.orderId) && payment.recipient === financialRecipient);
   const relatedSettlements = settlements.filter((settlement) =>
     party.kind === "supplier"
       ? settlement.supplierId === party.id
@@ -39,6 +40,9 @@ export function PartyDetailDrawer({ party, open, canEdit, onClose }: PartyDetail
   const commercialTotal = relatedOrders.reduce((total, order) => total + (order.values?.net ?? 0), 0);
   const expectedTotal = relatedInstallments.reduce((total, item) => total + item.expectedAmount, 0);
   const paidTotal = relatedPayments.reduce((total, item) => total + item.amount, 0);
+  const expectedLabel = party.kind === "client" ? "A receber do cliente" : "A pagar ao fornecedor";
+  const paidLabel = party.kind === "client" ? "Recebido do cliente" : "Pago ao fornecedor";
+  const differenceLabel = party.kind === "client" ? "Diferença do cliente" : "Diferença do fornecedor";
 
   const close = () => {
     setEditing(false);
@@ -100,9 +104,9 @@ export function PartyDetailDrawer({ party, open, canEdit, onClose }: PartyDetail
             <h3 id="party-finance-title">Resumo financeiro</h3>
             <dl className="party-detail__facts">
               <div><dt>Valor comercial líquido</dt><dd>{currency.format(commercialTotal)}</dd></div>
-              <div><dt>Valor previsto</dt><dd>{currency.format(expectedTotal)}</dd></div>
-              <div><dt>Valor realizado</dt><dd>{currency.format(paidTotal)}</dd></div>
-              <div><dt>Diferença</dt><dd>{currency.format(paidTotal - expectedTotal)}</dd></div>
+              <div><dt>{expectedLabel}</dt><dd>{currency.format(expectedTotal)}</dd></div>
+              <div><dt>{paidLabel}</dt><dd>{currency.format(paidTotal)}</dd></div>
+              <div><dt>{differenceLabel}</dt><dd>{currency.format(paidTotal - expectedTotal)}</dd></div>
             </dl>
           </section>
 

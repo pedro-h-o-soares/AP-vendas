@@ -57,6 +57,51 @@ describe("responsive navigation", () => {
     expect(screen.queryByRole("link", { name: /financeiro/i })).not.toBeInTheDocument();
   });
 
+  it("opens authorized overflow destinations and restores focus with Escape", async () => {
+    const user = userEvent.setup();
+    render(
+      <Providers>
+        <SessionButton role="admin" />
+        <MobileNav />
+      </Providers>,
+    );
+    await user.click(screen.getByRole("button", { name: /sessão admin/i }));
+
+    const more = screen.getByRole("button", { name: "Mais" });
+    expect(more).toHaveAttribute("aria-haspopup", "menu");
+    expect(more).toHaveAttribute("aria-expanded", "false");
+    await user.click(more);
+
+    const menu = screen.getByRole("menu", { name: /mais destinos/i });
+    expect(more).toHaveAttribute("aria-expanded", "true");
+    expect(more).toHaveAttribute("aria-controls", menu.id);
+    expect(within(menu).getByRole("menuitem", { name: "Clientes" })).toHaveAttribute("href", "/clientes");
+    expect(within(menu).getByRole("menuitem", { name: "Fornecedores" })).toHaveAttribute("href", "/fornecedores");
+    expect(within(menu).getByRole("menuitem", { name: "Relatórios" })).toHaveAttribute("href", "/reports");
+    expect(within(menu).getByRole("menuitem", { name: "Clientes" })).toHaveFocus();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu", { name: /mais destinos/i })).not.toBeInTheDocument();
+    expect(more).toHaveFocus();
+  });
+
+  it("shows commercial party links but hides unauthorized overflow destinations", async () => {
+    const user = userEvent.setup();
+    render(
+      <Providers>
+        <SessionButton role="commercial" />
+        <MobileNav />
+      </Providers>,
+    );
+    await user.click(screen.getByRole("button", { name: /sessão commercial/i }));
+    await user.click(screen.getByRole("button", { name: "Mais" }));
+
+    const menu = screen.getByRole("menu", { name: /mais destinos/i });
+    expect(within(menu).getByRole("menuitem", { name: "Clientes" })).toBeVisible();
+    expect(within(menu).getByRole("menuitem", { name: "Fornecedores" })).toBeVisible();
+    expect(within(menu).queryByRole("menuitem", { name: "Relatórios" })).not.toBeInTheDocument();
+  });
+
   it.each([
     ["admin", ["Dashboard", "Pedidos", "Logística", "Financeiro"], []],
     ["commercial", ["Dashboard", "Pedidos", "Logística"], ["Financeiro"]],

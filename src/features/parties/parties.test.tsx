@@ -36,6 +36,9 @@ it("shows client contacts, conditions and linked operational history", async () 
 
   const drawer = screen.getByRole("dialog", { name: /101 comercio de madeiras/i });
   expect(within(drawer).getByText("Linhares")).toBeVisible();
+  expect(within(drawer).getByText("Contato demonstrativo 101")).toBeVisible();
+  expect(within(drawer).getByText("(27) 99999-0101")).toBeVisible();
+  expect(within(drawer).getByText("cliente.101@demo.ogura.local")).toBeVisible();
   expect(within(drawer).getByText("30/45/60/75/90")).toBeVisible();
   expect(screen.getByRole("heading", { name: /histórico de pedidos/i })).toBeVisible();
   expect(screen.getByRole("heading", { name: /embarques relacionados/i })).toBeVisible();
@@ -48,11 +51,55 @@ it("shows supplier commission, cash discount and settlements", async () => {
   const user = await renderPage(<SuppliersPage />);
 
   await user.click(screen.getByRole("button", { name: /ver santa rita/i }));
+  const drawer = screen.getByRole("dialog", { name: /santa rita/i });
 
   expect(screen.getByText("5,00%", { selector: "dd" })).toBeVisible();
   expect(screen.getByText("2,50%", { selector: "dd" })).toBeVisible();
   expect(screen.getByRole("heading", { name: /acertos relacionados/i })).toBeVisible();
   expect(screen.getByText("06/2026")).toBeVisible();
+  expect(within(drawer).getByText("Contato demonstrativo Santa Rita")).toBeVisible();
+  expect(within(drawer).getByText("(27) 99999-0202")).toBeVisible();
+  expect(within(drawer).getByText("santa.rita@demo.ogura.local")).toBeVisible();
+});
+
+it("finds clients by phone", async () => {
+  const user = await renderPage(<ClientsPage />);
+  await user.type(screen.getByRole("searchbox", { name: /buscar clientes/i }), "99999-0101");
+
+  expect(screen.getByRole("cell", { name: /^101 comercio de madeiras ltda me$/i })).toBeVisible();
+  expect(screen.queryByText("SERMAD")).not.toBeInTheDocument();
+});
+
+it("finds suppliers by phone", async () => {
+  const user = await renderPage(<SuppliersPage />);
+  await user.type(screen.getByRole("searchbox", { name: /buscar fornecedores/i }), "99999-0202");
+
+  expect(screen.getByText("SANTA RITA")).toBeVisible();
+  expect(screen.queryByText("MADEPOL")).not.toBeInTheDocument();
+});
+
+it("excludes third-party recipient movements from the client financial summary", async () => {
+  const user = await renderPage(<ClientsPage />);
+  await user.click(screen.getByRole("button", { name: /ver madeiras betini/i }));
+  const finance = screen.getByRole("heading", { name: /resumo financeiro/i }).closest("section");
+
+  expect(finance).not.toBeNull();
+  expect(within(finance as HTMLElement).getByText("A receber do cliente")).toBeVisible();
+  expect(within(finance as HTMLElement).getByText("Recebido do cliente")).toBeVisible();
+  expect(within(finance as HTMLElement).queryByText(/6\.217,14/)).not.toBeInTheDocument();
+  expect(within(finance as HTMLElement).queryByText(/11\.000,00/)).not.toBeInTheDocument();
+});
+
+it("excludes third-party recipient movements from the supplier financial summary", async () => {
+  const user = await renderPage(<SuppliersPage />);
+  await user.click(screen.getByRole("button", { name: /ver madepol/i }));
+  const finance = screen.getByRole("heading", { name: /resumo financeiro/i }).closest("section");
+
+  expect(finance).not.toBeNull();
+  expect(within(finance as HTMLElement).getByText("A pagar ao fornecedor")).toBeVisible();
+  expect(within(finance as HTMLElement).getByText("Pago ao fornecedor")).toBeVisible();
+  expect(within(finance as HTMLElement).queryByText(/6\.217,14/)).not.toBeInTheDocument();
+  expect(within(finance as HTMLElement).queryByText(/11\.000,00/)).not.toBeInTheDocument();
 });
 
 it("validates name and at least one contact method", async () => {
@@ -86,5 +133,13 @@ it("keeps finance users read-only while preserving client and supplier access", 
   await user.click(screen.getByRole("button", { name: /ver 101 comercio de madeiras/i }));
 
   expect(screen.getByRole("dialog", { name: /101 comercio de madeiras/i })).toBeVisible();
+  expect(screen.queryByRole("button", { name: /editar cadastro/i })).not.toBeInTheDocument();
+});
+
+it("keeps finance users read-only on the supplier directory", async () => {
+  const user = await renderPage(<SuppliersPage />, "finance");
+  await user.click(screen.getByRole("button", { name: /ver santa rita/i }));
+
+  expect(screen.getByRole("dialog", { name: /santa rita/i })).toBeVisible();
   expect(screen.queryByRole("button", { name: /editar cadastro/i })).not.toBeInTheDocument();
 });
