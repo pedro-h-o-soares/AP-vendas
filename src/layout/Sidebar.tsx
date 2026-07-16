@@ -25,7 +25,7 @@ const destinations = [
   { label: "Fornecedores", to: "/fornecedores", icon: Factory, permission: "view-parties" },
   { label: "Logística", to: "/logistica", icon: Truck, permission: "view-logistics" },
   { label: "Ocorrências", to: "/ocorrencias", icon: TriangleAlert, permission: "view-logistics" },
-  { label: "Financeiro", to: "/finance", icon: WalletCards, permission: "view-finance" },
+  { label: "Financeiro", to: "/financeiro", icon: WalletCards, permission: "view-finance" },
 ] satisfies { label: string; to: string; icon: typeof LayoutDashboard; permission: Permission }[];
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {

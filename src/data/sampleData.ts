@@ -61,8 +61,9 @@ export const sampleOrders: Order[] = [
     supplierName: "BRASIL FLORA",
     paymentTerms: "30/45/60/75/90",
     status: "shipment-informed",
-    financialStatus: "receivable",
+    financialStatus: "overdue",
     items: [],
+    installmentIds: [1, 2, 3, 4, 5].map((sequence) => `installment-brasil-flora-3824-${sequence}`),
     values: {
       merchandise: 8_593.75,
       freight: 938.6,
@@ -144,7 +145,22 @@ export const sampleInstallment: Installment = {
   difference: 4_782.86,
 };
 
-export const sampleInstallments: Installment[] = [sampleInstallment];
+const brasilFloraDueDates = ["2026-02-23", "2026-03-10", "2026-03-25", "2026-04-09", "2026-04-24"] as const;
+export const sampleOverdueInstallments: Installment[] = brasilFloraDueDates.map((dueAt, index) => ({
+  id: `installment-brasil-flora-3824-${index + 1}`,
+  orderId: "order-brasil-flora-3824",
+  sequence: index + 1,
+  totalInstallments: brasilFloraDueDates.length,
+  dueAt,
+  recipient: "representative",
+  recipientName: "OGURA REP",
+  expectedAmount: 1_531.03,
+  status: "overdue",
+  notes: `Parcela ${index + 1} demonstrativa vinculada ao pedido 3824.`,
+}));
+export const sampleOverdueInstallment = sampleOverdueInstallments[0]!;
+
+export const sampleInstallments: Installment[] = [sampleInstallment, ...sampleOverdueInstallments];
 
 export const samplePayments: Payment[] = [
   {

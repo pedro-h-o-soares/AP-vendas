@@ -812,6 +812,196 @@ select:focus-visible {
   display: none;
 }
 
+.finance-tabs {
+  display: flex;
+  gap: 0.45rem;
+  margin: 1.25rem 0 0.9rem;
+  overflow-x: auto;
+}
+
+.finance-tabs button {
+  min-height: 2.75rem;
+  flex: 0 0 auto;
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 0.9rem;
+  color: var(--color-muted);
+  background: rgba(255, 255, 255, 0.5);
+  font-weight: 750;
+}
+
+.finance-tabs button[aria-selected="true"] {
+  border-color: rgba(111, 88, 217, 0.14);
+  color: var(--color-primary-strong);
+  background: rgba(111, 88, 217, 0.12);
+}
+
+.finance-list-heading,
+.collection-card__heading,
+.payment-form__summary,
+.payment-difference {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.finance-list-heading h2,
+.collections-panel h2,
+.payment-form h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.finance-list-heading {
+  margin-bottom: 0.8rem;
+}
+
+.finance-detail,
+.payment-form,
+.collections-panel,
+.collection-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.finance-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.finance-facts div,
+.payment-form__summary,
+.payment-difference {
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid rgba(111, 88, 217, 0.09);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.finance-facts dt,
+.payment-form__summary span,
+.payment-difference span {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.finance-facts dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.payment-form {
+  padding: 1rem;
+  border: 1px solid rgba(111, 88, 217, 0.11);
+  border-radius: 1rem;
+  background: rgba(111, 88, 217, 0.05);
+}
+
+.payment-form__conditional {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.payment-difference {
+  color: #257862;
+  background: rgba(69, 166, 141, 0.1);
+}
+
+.payment-difference--negative {
+  color: var(--color-danger);
+  background: rgba(220, 76, 100, 0.08);
+}
+
+.payment-form > .button-primary,
+.collection-contact .button-primary {
+  justify-self: end;
+}
+
+.collections-panel {
+  margin-top: 1rem;
+}
+
+.collection-card {
+  padding: 1.15rem;
+  border: 1px solid rgba(111, 88, 217, 0.1);
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 0.65rem 2rem rgba(61, 48, 119, 0.07);
+}
+
+.collection-card__heading > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.collection-card__heading span {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+
+.collection-contact,
+.collection-contact label {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.collection-contact label {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.collection-contact textarea {
+  padding: 0.75rem;
+  resize: vertical;
+  border: 1px solid rgba(111, 88, 217, 0.16);
+  border-radius: 0.85rem;
+  color: var(--color-ink);
+  background: rgba(255, 255, 255, 0.9);
+  font: inherit;
+}
+
+.collection-history,
+.finance-movements {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.collection-history li,
+.finance-movements li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.35rem 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.8rem;
+  background: rgba(111, 88, 217, 0.05);
+  font-size: 0.78rem;
+}
+
+.collection-history time,
+.finance-movements time {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+}
+
+.finance-movements li {
+  grid-template-columns: auto minmax(8rem, 1fr) auto auto;
+  align-items: center;
+}
+
 @media (max-width: 63.999rem) {
   .app-shell {
     grid-template-columns: 14.5rem minmax(0, 1fr);
@@ -936,11 +1126,19 @@ select:focus-visible {
   .party-form,
   .party-detail__facts,
   .logistics-facts,
-  .incident-form { grid-template-columns: 1fr; }
+  .incident-form,
+  .finance-facts,
+  .payment-form__conditional { grid-template-columns: 1fr; }
   .incident-form .form-field,
   .incident-form > button { grid-column: 1; }
   .incident-form > button { width: 100%; }
   .party-detail__list li { grid-template-columns: 1fr; }
+  .finance-list-heading,
+  .collection-card__heading { align-items: stretch; flex-direction: column; }
+  .finance-list-heading .button-primary,
+  .payment-form > .button-primary,
+  .collection-contact .button-primary { width: 100%; }
+  .finance-movements li { grid-template-columns: 1fr; }
 
   .data-table thead {
     position: absolute;

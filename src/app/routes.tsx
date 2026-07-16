@@ -10,6 +10,7 @@ import { ClientsPage } from "../features/parties/ClientsPage";
 import { SuppliersPage } from "../features/parties/SuppliersPage";
 import { LogisticsPage } from "../features/logistics/LogisticsPage";
 import { IncidentsPage } from "../features/incidents/IncidentsPage";
+import { FinancePage } from "../features/finance/FinancePage";
 import { AppShell } from "../layout/AppShell";
 
 export interface AppRouteDefinition {
@@ -27,7 +28,7 @@ export const routeTable: AppRouteDefinition[] = [
   { path: "/fornecedores", label: "Fornecedores", permission: "view-parties" },
   { path: "/logistica", label: "Logística", permission: "view-logistics" },
   { path: "/ocorrencias", label: "Ocorrências", permission: "view-logistics" },
-  { path: "/finance", label: "Financeiro", permission: "view-finance" },
+  { path: "/financeiro", label: "Financeiro", permission: "view-finance" },
   { path: "/checks", label: "Cheques", permission: "view-checks" },
   { path: "/settlements", label: "Acertos", permission: "view-settlements" },
   { path: "/reports", label: "Relatórios", permission: "view-reports" },
@@ -55,6 +56,7 @@ const pageForRoute = (path: string, label: string) => {
   if (path === "/fornecedores") return <SuppliersPage />;
   if (path === "/logistica") return <LogisticsPage />;
   if (path === "/ocorrencias") return <IncidentsPage />;
+  if (path === "/financeiro") return <FinancePage />;
   return <PlaceholderPage label={label} />;
 };
 
@@ -85,6 +87,7 @@ export function AppRoutes() {
       />
       <Route path="/orders" element={<Navigate replace to="/pedidos" />} />
       <Route path="/logistics" element={<Navigate replace to="/logistica" />} />
+      <Route path="/finance" element={<Navigate replace to="/financeiro" />} />
       <Route path="*" element={<Navigate replace to="/dashboard" />} />
     </Routes>
   );

@@ -19,6 +19,7 @@ import {
 import { toLocalISODate } from "../domain/localDate";
 import type {
   Check,
+  FinancialStatus,
   ISODate,
   Incident,
   Installment,
@@ -52,6 +53,13 @@ type PostalShipmentInput = Omit<PostalShipment, "id" | "orderId"> & {
   orderId: string;
 };
 
+export interface CollectionContact {
+  id: string;
+  installmentId: string;
+  date: ISODate;
+  note: string;
+}
+
 export interface PrototypeStore {
   orders: Order[];
   parties: Party[];
@@ -63,6 +71,7 @@ export interface PrototypeStore {
   settlements: Settlement[];
   users: UserProfile[];
   orderTimelineEvents: OrderTimelineEvent[];
+  collectionContacts: CollectionContact[];
   updateParty: (party: Party) => Party;
   createQuote: (input: QuoteInput) => Order;
   convertQuoteToOrder: (quoteId: string, orderNumber: string) => Order;
@@ -72,6 +81,7 @@ export interface PrototypeStore {
   createIncident: (input: IncidentInput) => Incident;
   contactIncidentSupplier: (incidentId: string) => Incident;
   recordPayment: (input: PaymentInput) => Payment;
+  recordCollectionContact: (installmentId: string, note: string) => CollectionContact;
   createPostalShipment: (input: PostalShipmentInput) => PostalShipment;
   resetDemo: () => void;
 }
@@ -89,6 +99,7 @@ interface DemoState {
   settlements: Settlement[];
   users: UserProfile[];
   orderTimelineEvents: OrderTimelineEvent[];
+  collectionContacts: CollectionContact[];
 }
 
 const clone = <T,>(value: T): T => structuredClone(value);
@@ -105,6 +116,7 @@ const createDemoState = (): DemoState =>
     settlements: sampleSettlements,
     users: sampleUsers,
     orderTimelineEvents: [],
+    collectionContacts: [],
   });
 
 const replaceOrder = (orders: Order[], changed: Order): Order[] =>
@@ -267,18 +279,69 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   };
 
   const recordPayment = (input: PaymentInput): Payment => {
+    const currentInstallment = input.installmentId
+      ? demo.installments.find(({ id }) => id === input.installmentId)
+      : undefined;
+    if (currentInstallment && ["paid", "overpaid", "settled"].includes(currentInstallment.status)) {
+      throw new Error(`Installment already settled: ${currentInstallment.id}`);
+    }
     const payment = clone({ ...input, id: nextId("payment") });
-    const order = findOrder(input.orderId);
-    const changedOrder = {
-      ...order,
-      paymentIds: [...(order.paymentIds ?? []), payment.id],
-    };
+    findOrder(input.orderId);
+    setDemo((current) => {
+      const installments = current.installments.map((installment) => {
+        if (installment.id !== input.installmentId) return installment;
+        const actualAmount = (installment.actualAmount ?? 0) + input.amount;
+        const difference = actualAmount - installment.expectedAmount;
+        const status: FinancialStatus = difference > 0 ? "overpaid" : difference < 0 ? "partially-paid" : "paid";
+        return {
+          ...installment,
+          paidAt: input.paidAt,
+          actualAmount,
+          method: input.method,
+          operation: input.operation,
+          bank: input.bank,
+          branch: input.branch,
+          account: input.account,
+          difference,
+          status,
+          notes: input.notes,
+        };
+      });
+      const order = current.orders.find(({ id }) => id === input.orderId)!;
+      const orderInstallments = installments.filter(({ orderId }) => orderId === input.orderId);
+      let financialStatus = order.financialStatus;
+      if (orderInstallments.length > 0) {
+        const expectedInstallments = Math.max(...orderInstallments.map(({ totalInstallments }) => totalInstallments));
+        const allSettled = orderInstallments.length >= expectedInstallments
+          && orderInstallments.every(({ status }) => ["paid", "overpaid", "settled"].includes(status));
+        const somePaid = orderInstallments.some(({ actualAmount, status }) => Boolean(actualAmount) || status === "partially-paid");
+        financialStatus = allSettled
+          ? orderInstallments.some(({ status }) => status === "overpaid") ? "overpaid" : "paid"
+          : somePaid ? "partially-paid"
+          : orderInstallments.some(({ status }) => status === "overdue") ? "overdue" : order.financialStatus;
+      }
+      const changedOrder: Order = {
+        ...order,
+        paymentIds: [...(order.paymentIds ?? []), payment.id],
+        financialStatus,
+      };
+      return {
+        ...current,
+        payments: [...current.payments, payment],
+        installments,
+        orders: replaceOrder(current.orders, changedOrder),
+      };
+    });
+    return clone(payment);
+  };
+
+  const recordCollectionContact = (installmentId: string, note: string): CollectionContact => {
+    const contact = { id: nextId("collection-contact"), installmentId, date: toLocalISODate(), note };
     setDemo((current) => ({
       ...current,
-      payments: [...current.payments, payment],
-      orders: replaceOrder(current.orders, changedOrder),
+      collectionContacts: [...current.collectionContacts, contact],
     }));
-    return clone(payment);
+    return clone(contact);
   };
 
   const createPostalShipment = (input: PostalShipmentInput): PostalShipment => {
@@ -314,6 +377,7 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
         createIncident,
         contactIncidentSupplier,
         recordPayment,
+        recordCollectionContact,
         createPostalShipment,
         resetDemo,
       }}
