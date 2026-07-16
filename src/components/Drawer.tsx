@@ -1,4 +1,5 @@
 import { useId, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useModalFocus } from "./useModalFocus";
 
 interface DrawerProps {
@@ -16,7 +17,7 @@ export function Drawer({ title, open, onClose, children }: DrawerProps) {
   useModalFocus(open, onClose, drawerRef, closeRef);
 
   if (!open) return null;
-  return (
+  return createPortal(
     <div className="dialog-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <aside ref={drawerRef} className="drawer" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className="dialog-header">
@@ -25,6 +26,7 @@ export function Drawer({ title, open, onClose, children }: DrawerProps) {
         </header>
         <div className="drawer__content">{children}</div>
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }

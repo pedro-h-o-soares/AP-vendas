@@ -18,6 +18,7 @@ test("administrator confirms a delivery and records an incident with supplier fo
   await expect(shipmentDialog.getByRole("status")).toContainText("Entrega registrada");
   await shipmentDialog.getByRole("button", { name: "Fechar Embarque 3824" }).click();
   await expect(shipmentTrigger).toBeFocused();
+  await expect(page.getByRole("row").filter({ hasText: "101 COMERCIO DE MADEIRAS" })).toContainText("Entregue");
 
   await page.getByRole("link", { name: "Ocorrências", exact: true }).click();
   await page.getByRole("button", { name: "Nova ocorrência" }).click();
@@ -30,4 +31,10 @@ test("administrator confirms a delivery and records an incident with supplier fo
   await expect(page.getByRole("region", { name: "Ocorrência registrada" })).toBeVisible();
   await page.getByRole("button", { name: "Acionar fornecedor" }).click();
   await expect(page.getByText("Fornecedor acionado")).toBeVisible();
+  await page.getByRole("button", { name: "Fechar formulário" }).click();
+  const createdIncident = page.getByRole("row").filter({ hasText: "Outra divergência" });
+  await expect(createdIncident).toContainText("Aguardando fornecedor");
+  await page.getByRole("link", { name: "Dashboard", exact: true }).click();
+  await page.getByRole("link", { name: "Ocorrências", exact: true }).click();
+  await expect(page.getByRole("row").filter({ hasText: "Outra divergência" })).toContainText("Aguardando fornecedor");
 });

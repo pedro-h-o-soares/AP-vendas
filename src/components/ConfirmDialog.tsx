@@ -1,4 +1,5 @@
 import { useId, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useModalFocus } from "./useModalFocus";
 
 interface ConfirmDialogProps {
@@ -26,7 +27,7 @@ export function ConfirmDialog({
   useModalFocus(open, onCancel, dialogRef, cancelRef);
 
   if (!open) return null;
-  return (
+  return createPortal(
     <div className="dialog-backdrop">
       <section
         ref={dialogRef}
@@ -43,6 +44,7 @@ export function ConfirmDialog({
           <button className="button-primary" type="button" onClick={onConfirm}>{confirmLabel}</button>
         </footer>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }

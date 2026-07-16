@@ -159,7 +159,9 @@ textarea:focus-visible {
 
 .orders-table-panel,
 .order-tab-panel {
+  min-width: 0;
   margin-top: 1rem;
+  overflow-x: hidden;
   padding: 1.2rem;
   border: 1px solid rgba(111, 88, 217, 0.1);
   border-radius: var(--radius-card);
@@ -194,7 +196,7 @@ textarea:focus-visible {
 .check-field { display: flex; align-items: center; gap: 0.55rem; font-weight: 700; }
 
 .order-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.6rem; }
-.back-link { min-height: auto; margin-bottom: 0.5rem; padding: 0.35rem 0.5rem; color: var(--color-primary-strong); background: transparent; }
+.back-link { min-height: 2.75rem; margin-bottom: 0.5rem; padding: 0.35rem 0.5rem; color: var(--color-primary-strong); background: transparent; }
 .order-tabs { display: flex; gap: 0.4rem; margin-top: 1.5rem; overflow-x: auto; }
 .order-tabs button { flex: 0 0 auto; padding: 0.65rem 0.8rem; cursor: pointer; border: 0; border-radius: 0.8rem; color: var(--color-muted); background: transparent; font-weight: 750; }
 .order-tabs button[aria-selected="true"] { color: var(--color-primary-strong); background: rgba(111, 88, 217, 0.12); }
@@ -660,7 +662,7 @@ textarea:focus-visible {
 }
 
 .drawer {
-  width: min(32rem, 94vw);
+  width: min(32rem, 94vw, 100%);
   height: 100%;
   padding: 1.5rem;
   overflow-y: auto;
@@ -670,7 +672,7 @@ textarea:focus-visible {
 
 .dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .dialog-header h2 { margin: 0; }
-.dialog-header button { width: 2.5rem; height: 2.5rem; font-size: 1.5rem; }
+.dialog-header button { width: 2.75rem; height: 2.75rem; font-size: 1.5rem; }
 .drawer__content { margin-top: 1.5rem; }
 
 .confirm-dialog {
@@ -702,6 +704,7 @@ textarea:focus-visible {
 .app-shell__content {
   min-width: 0;
   padding: clamp(1rem, 2.5vw, 2.5rem);
+  overflow-x: hidden;
   border-radius: var(--radius-panel);
   background: #fff;
   background: var(--surface-glass);
@@ -757,8 +760,8 @@ textarea:focus-visible {
 
 .sidebar__toggle {
   display: grid;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   flex: 0 0 auto;
   cursor: pointer;
   place-items: center;

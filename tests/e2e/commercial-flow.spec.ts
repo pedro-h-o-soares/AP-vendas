@@ -29,7 +29,14 @@ test("commercial user creates and converts a quote with stock, price, term and p
   await expect(dialog.getByRole("status")).toContainText("Orçamento confirmado");
   await dialog.getByRole("button", { name: "Converter em pedido" }).click();
   await expect(dialog.getByRole("status")).toContainText(/convertido em pedido ORC-/);
+  const orderNumber = (await dialog.getByRole("status").textContent())?.match(/ORC-\d{4}-\d+/)?.[0];
+  expect(orderNumber).toBeTruthy();
 
   await dialog.getByRole("button", { name: "Fechar Novo orçamento" }).click();
   await expect(trigger).toBeFocused();
+  const createdRow = page.getByRole("row").filter({ hasText: orderNumber! });
+  await expect(createdRow).toContainText("101 COMERCIO DE MADEIRAS LTDA ME");
+  await createdRow.getByRole("button", { name: "Ver pedido" }).click();
+  await expect(page.getByRole("heading", { name: `Pedido ${orderNumber}` })).toBeVisible();
+  await expect(page.getByText(`${orderNumber}`, { exact: false }).first()).toBeVisible();
 });
