@@ -145,6 +145,37 @@ describe("detalhe do cheque e postagem", () => {
 
     expect(screen.getByLabelText(/última diferença/i)).toBeEmptyDOMElement();
   });
+
+  it("bloqueia nova postagem na interface quando o cheque já foi vinculado", async () => {
+    const user = await renderWithSession(<PostalHarness />);
+    await user.selectOptions(screen.getByLabelText(/serviço postal/i), "pac");
+    await user.type(screen.getByLabelText(/destinatário/i), "MADEPOL");
+    const submit = screen.getByRole("button", { name: /simular postagem/i });
+    await user.click(submit);
+
+    expect(submit).toBeDisabled();
+    expect(screen.getByText(/cheque já vinculado à postagem/i)).toBeVisible();
+    expect(screen.getByLabelText(/quantidade de postagens/i)).toHaveTextContent("2");
+    await user.click(submit);
+    expect(screen.getByLabelText(/quantidade de postagens/i)).toHaveTextContent("2");
+  });
+
+  it("recalcula a prévia ao editar valores depois da submissão", async () => {
+    const user = await renderWithSession(<PostalShipmentForm checkId={sampleCheck.id} />);
+    await user.selectOptions(screen.getByLabelText(/serviço postal/i), "pac");
+    await user.type(screen.getByLabelText(/destinatário/i), "MADEPOL");
+    const paid = screen.getByLabelText(/valor pago/i);
+    await user.type(paid, "20");
+    await user.type(screen.getByLabelText(/valor a receber/i), "30");
+    await user.click(screen.getByRole("button", { name: /simular postagem/i }));
+
+    const difference = screen.getByText("Diferença").parentElement!;
+    expect(difference).toHaveTextContent(/R\$\s*10,00/);
+    await user.clear(paid);
+    await user.type(paid, "25");
+    expect(difference).toHaveTextContent(/R\$\s*5,00/);
+    expect(difference).not.toHaveTextContent(/R\$\s*10,00/);
+  });
 });
 
 describe("página de Cheques e Correios", () => {

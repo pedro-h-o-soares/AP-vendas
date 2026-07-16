@@ -348,6 +348,10 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   };
 
   const createPostalShipment = (input: PostalShipmentInput): PostalShipment => {
+    const linkedCheck = demo.checks.find((check) => input.checkIds.includes(check.id) && check.postalShipmentId);
+    if (linkedCheck) {
+      throw new Error(`Cheque já vinculado à postagem: ${linkedCheck.postalShipmentId}`);
+    }
     const shipment = clone({ ...input, id: nextId("postal") });
     const order = findOrder(input.orderId);
     const changedOrder = {

@@ -177,6 +177,38 @@ describe("PrototypeStore", () => {
     });
   });
 
+  it("preserva a postagem original quando tentam vincular o mesmo cheque novamente", () => {
+    const { result } = renderHook(() => usePrototypeStore(), { wrapper });
+    const check = result.current.checks[0];
+    let originalPostalId = "";
+
+    act(() => {
+      originalPostalId = result.current.createPostalShipment({
+        orderId: check.orderId,
+        carrier: "Correios",
+        service: "PAC",
+        trackingCode: "OG000000101BR",
+        status: "prepared",
+        checkIds: [check.id],
+      }).id;
+    });
+
+    expect(() => {
+      act(() => {
+        result.current.createPostalShipment({
+          orderId: check.orderId,
+          carrier: "Correios",
+          service: "SEDEX",
+          trackingCode: "OG000000102BR",
+          status: "prepared",
+          checkIds: [check.id],
+        });
+      });
+    }).toThrow(/cheque já vinculado/i);
+    expect(result.current.checks.find(({ id }) => id === check.id)?.postalShipmentId).toBe(originalPostalId);
+    expect(result.current.postalShipments.filter(({ checkIds }) => checkIds.includes(check.id))).toHaveLength(1);
+  });
+
   it("updates a party only in the in-memory provider state", () => {
     const { result } = renderHook(() => usePrototypeStore(), { wrapper });
     const party = result.current.parties[0];

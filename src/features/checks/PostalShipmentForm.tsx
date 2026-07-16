@@ -41,6 +41,10 @@ export function PostalShipmentForm({ checkId }: { checkId: string }) {
   const [submittedDifference, setSubmittedDifference] = useState<number>();
   const [submitted, setSubmitted] = useState(false);
   const canManage = Boolean(user && can(user.role, "manage-checks"));
+  const linkedShipment = check?.postalShipmentId
+    ? postalShipments.find(({ id }) => id === check.postalShipmentId)
+    : undefined;
+  const alreadyLinked = Boolean(check?.postalShipmentId);
   const difference = useMemo(() => {
     const paid = parseMoney(paidAmount);
     const receivable = parseMoney(receivableAmount);
@@ -49,12 +53,16 @@ export function PostalShipmentForm({ checkId }: { checkId: string }) {
     [paidAmount, receivableAmount],
   );
   const displayedDifference = submitted ? submittedDifference : difference;
+  const invalidateFinancialSnapshot = () => {
+    setSubmitted(false);
+    setSubmittedDifference(undefined);
+  };
 
   if (!check) return <p className="permission-note">Cheque não encontrado.</p>;
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!canManage) return;
+    if (!canManage || alreadyLinked) return;
     const nextServiceError = service ? "" : "Selecione o serviço postal.";
     const nextRecipientError = recipient.trim() ? "" : "Informe o destinatário.";
     setServiceError(nextServiceError);
@@ -114,14 +122,15 @@ export function PostalShipmentForm({ checkId }: { checkId: string }) {
         </FormField>
         <FormField label="Custo da postagem"><input inputMode="decimal" value={cost} onChange={(event) => setCost(event.target.value)} /></FormField>
         <FormField label="Fatura"><input value={invoice} onChange={(event) => setInvoice(event.target.value)} /></FormField>
-        <FormField label="Valor pago"><input inputMode="decimal" value={paidAmount} onChange={(event) => setPaidAmount(event.target.value)} /></FormField>
-        <FormField label="Valor a receber"><input inputMode="decimal" value={receivableAmount} onChange={(event) => setReceivableAmount(event.target.value)} /></FormField>
+        <FormField label="Valor pago"><input inputMode="decimal" value={paidAmount} onChange={(event) => { setPaidAmount(event.target.value); invalidateFinancialSnapshot(); }} /></FormField>
+        <FormField label="Valor a receber"><input inputMode="decimal" value={receivableAmount} onChange={(event) => { setReceivableAmount(event.target.value); invalidateFinancialSnapshot(); }} /></FormField>
         <FormField label="Pago por"><input value={paymentBy} onChange={(event) => setPaymentBy(event.target.value)} /></FormField>
         <FormField label="Responsável"><input value={responsible} onChange={(event) => setResponsible(event.target.value)} /></FormField>
         <FormField label="Observações"><textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} /></FormField>
       </div>
       <div className="postal-form__difference"><span>Diferença</span><strong>{displayedDifference === undefined ? "—" : currency.format(displayedDifference)}</strong></div>
-      {canManage ? <button className="button-primary" type="submit">Simular postagem</button> : <p className="permission-note">Perfil sem permissão para simular postagens.</p>}
+      {alreadyLinked && <p className="permission-note">Cheque já vinculado à postagem {linkedShipment?.trackingCode ?? check.postalShipmentId}. Nova simulação bloqueada.</p>}
+      {canManage ? <button className="button-primary" disabled={alreadyLinked} type="submit">Simular postagem</button> : <p className="permission-note">Perfil sem permissão para simular postagens.</p>}
       {submitted && <p className="session-notice" role="status">Postagem preparada somente nesta sessão.</p>}
     </form>
   );
