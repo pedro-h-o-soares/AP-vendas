@@ -9,6 +9,9 @@ import {
   WalletCards,
   TriangleAlert,
   MailCheck,
+  HandCoins,
+  BarChart3,
+  UserCog,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
@@ -28,6 +31,9 @@ const destinations = [
   { label: "Ocorrências", to: "/ocorrencias", icon: TriangleAlert, permission: "view-logistics" },
   { label: "Financeiro", to: "/financeiro", icon: WalletCards, permission: "view-finance" },
   { label: "Cheques e Correios", to: "/cheques-correios", icon: MailCheck, permission: "view-checks" },
+  { label: "Acertos", to: "/acertos", icon: HandCoins, permission: "view-settlements" },
+  { label: "Relatórios", to: "/relatorios", icon: BarChart3, permission: "view-reports" },
+  { label: "Usuários", to: "/administracao/usuarios", icon: UserCog, permission: "manage-users" },
 ] satisfies { label: string; to: string; icon: typeof LayoutDashboard; permission: Permission }[];
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {

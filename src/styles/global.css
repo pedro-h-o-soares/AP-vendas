@@ -1120,6 +1120,55 @@ select:focus-visible {
   font-size: 0.78rem;
 }
 
+.module-page,
+.annual-report {
+  display: grid;
+  gap: 1rem;
+}
+
+.module-panel,
+.settlement-report,
+.annual-report,
+.report-group {
+  min-width: 0;
+  padding: 1.2rem;
+  border: 1px solid rgba(111, 88, 217, 0.1);
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 0.65rem 2rem rgba(61, 48, 119, 0.06);
+}
+
+.module-panel h2,
+.report-group h3 { margin-top: 0; }
+.module-panel > p,
+.report-group > p { color: var(--color-muted); font-size: 0.82rem; }
+
+.settlement-report { margin-top: 1rem; }
+.settlement-report__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(111, 88, 217, 0.12); }
+.settlement-report__header h2 { margin: 0.25rem 0 0; }
+.settlement-report__header > strong { color: var(--color-primary-strong); font-size: clamp(1.5rem, 4vw, 2.3rem); letter-spacing: -0.04em; }
+.report-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
+.report-facts div { min-width: 0; padding: 0.85rem; border-radius: 0.9rem; background: rgba(111, 88, 217, 0.05); }
+.report-facts dt { color: var(--color-muted); font-size: 0.68rem; font-weight: 750; text-transform: uppercase; }
+.report-facts dd { margin: 0.3rem 0 0; overflow-wrap: anywhere; font-size: 0.82rem; font-weight: 750; }
+
+.reports-summary { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.annual-report { margin-top: 1rem; background: rgba(247, 245, 253, 0.82); }
+.annual-report__summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.report-group { box-shadow: none; }
+
+.user-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.user-form > button { align-self: end; justify-self: start; }
+.user-form .session-notice { grid-column: 1 / -1; margin: 0; }
+.user-form input[type="checkbox"] { width: 1.25rem; min-height: 1.25rem; accent-color: var(--color-primary); }
+.table-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.table-actions button { padding: 0.45rem 0.6rem; cursor: pointer; border: 0; border-radius: 0.7rem; background: rgba(111, 88, 217, 0.1); font-size: 0.72rem; font-weight: 750; }
+.permission-matrix td { text-align: center; }
+.permission-yes,
+.permission-no { display: inline-grid; width: 1.8rem; height: 1.8rem; place-items: center; border-radius: 99rem; }
+.permission-yes { color: #257862; background: rgba(69, 166, 141, 0.14); }
+.permission-no { color: var(--color-muted); background: rgba(118, 111, 140, 0.08); }
+
 .collection-history time,
 .finance-movements time {
   color: var(--color-muted);
@@ -1142,6 +1191,8 @@ select:focus-visible {
 
   .filter-bar,
   .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .reports-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .report-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-grid { grid-template-columns: 1fr; }
 }
 
@@ -1249,6 +1300,16 @@ select:focus-visible {
   .kpi-grid,
   .kpi-grid--finance { grid-template-columns: 1fr; }
 
+  .reports-summary,
+  .annual-report__summary,
+  .report-facts,
+  .user-form { grid-template-columns: 1fr; }
+  .settlement-report__header { flex-direction: column; }
+  .module-panel,
+  .settlement-report,
+  .annual-report,
+  .report-group { padding: 0.9rem; }
+
   .page-header { flex-direction: column; }
   .order-actions { justify-content: flex-start; }
   .detail-grid { grid-template-columns: 1fr; }
@@ -1292,6 +1353,7 @@ select:focus-visible {
   .data-table td { display: block; width: 100%; }
   .data-table tr { margin-bottom: 0.8rem; padding: 0.55rem; border: 1px solid rgba(111, 88, 217, 0.1); border-radius: 0.9rem; }
   .data-table td { display: grid; grid-template-columns: minmax(6rem, 0.7fr) 1fr; gap: 0.6rem; padding: 0.55rem; border: 0; text-align: left; }
+  .data-table th[scope="row"] { display: block; padding: 0.55rem; border: 0; color: var(--color-ink); font-size: 0.78rem; letter-spacing: 0; text-transform: none; }
   .data-table td::before { color: var(--color-muted); content: attr(data-label); font-size: 0.65rem; font-weight: 750; text-transform: uppercase; }
   .data-table__action { display: block !important; }
   .data-table__action::before { content: none !important; }

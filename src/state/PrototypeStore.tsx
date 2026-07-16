@@ -86,6 +86,8 @@ export interface PrototypeStore {
   createPostalShipment: (input: PostalShipmentInput) => PostalShipment;
   updateCheckStatus: (checkId: string, status: FinancialStatus) => Check;
   updatePostalShipmentStatus: (shipmentId: string, status: PostalStatus, deliveredAt?: ISODate) => PostalShipment;
+  createUser: (input: Omit<UserProfile, "id">) => UserProfile;
+  updateUser: (user: UserProfile) => UserProfile;
   resetDemo: () => void;
 }
 
@@ -405,6 +407,22 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
     return clone(changed);
   };
 
+  const createUser = (input: Omit<UserProfile, "id">): UserProfile => {
+    const user = clone({ ...input, id: nextId("user") });
+    setDemo((current) => ({ ...current, users: [...current.users, user] }));
+    return clone(user);
+  };
+
+  const updateUser = (user: UserProfile): UserProfile => {
+    if (!demo.users.some(({ id }) => id === user.id)) throw new Error(`User not found: ${user.id}`);
+    const changed = clone(user);
+    setDemo((current) => ({
+      ...current,
+      users: current.users.map((candidate) => candidate.id === changed.id ? changed : candidate),
+    }));
+    return clone(changed);
+  };
+
   const resetDemo = () => {
     sequence.current = 0;
     postalCheckReservations.current = createPostalCheckReservations(sampleChecks);
@@ -428,6 +446,8 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
         createPostalShipment,
         updateCheckStatus,
         updatePostalShipmentStatus,
+        createUser,
+        updateUser,
         resetDemo,
       }}
     >

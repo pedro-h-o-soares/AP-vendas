@@ -78,7 +78,7 @@ describe("responsive navigation", () => {
     expect(within(menu).getByRole("menuitem", { name: "Clientes" })).toHaveAttribute("href", "/clientes");
     expect(within(menu).getByRole("menuitem", { name: "Fornecedores" })).toHaveAttribute("href", "/fornecedores");
     expect(within(menu).getByRole("menuitem", { name: "Ocorrências" })).toHaveAttribute("href", "/ocorrencias");
-    expect(within(menu).getByRole("menuitem", { name: "Relatórios" })).toHaveAttribute("href", "/reports");
+    expect(within(menu).getByRole("menuitem", { name: "Relatórios" })).toHaveAttribute("href", "/relatorios");
     expect(within(menu).getByRole("menuitem", { name: "Clientes" })).toHaveFocus();
 
     await user.keyboard("{Escape}");

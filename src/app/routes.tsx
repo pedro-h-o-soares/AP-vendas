@@ -12,6 +12,9 @@ import { LogisticsPage } from "../features/logistics/LogisticsPage";
 import { IncidentsPage } from "../features/incidents/IncidentsPage";
 import { FinancePage } from "../features/finance/FinancePage";
 import { ChecksPage } from "../features/checks/ChecksPage";
+import { SettlementsPage } from "../features/settlements/SettlementsPage";
+import { ReportsPage } from "../features/reports/ReportsPage";
+import { UsersPage } from "../features/admin/UsersPage";
 import { AppShell } from "../layout/AppShell";
 
 export interface AppRouteDefinition {
@@ -31,9 +34,9 @@ export const routeTable: AppRouteDefinition[] = [
   { path: "/ocorrencias", label: "Ocorrências", permission: "view-logistics" },
   { path: "/financeiro", label: "Financeiro", permission: "view-finance" },
   { path: "/cheques-correios", label: "Cheques e Correios", permission: "view-checks" },
-  { path: "/settlements", label: "Acertos", permission: "view-settlements" },
-  { path: "/reports", label: "Relatórios", permission: "view-reports" },
-  { path: "/users", label: "Usuários", permission: "manage-users" },
+  { path: "/acertos", label: "Acertos", permission: "view-settlements" },
+  { path: "/relatorios", label: "Relatórios", permission: "view-reports" },
+  { path: "/administracao/usuarios", label: "Usuários", permission: "manage-users" },
 ];
 
 function LoginRoute() {
@@ -59,6 +62,9 @@ const pageForRoute = (path: string, label: string) => {
   if (path === "/ocorrencias") return <IncidentsPage />;
   if (path === "/financeiro") return <FinancePage />;
   if (path === "/cheques-correios") return <ChecksPage />;
+  if (path === "/acertos") return <SettlementsPage />;
+  if (path === "/relatorios") return <ReportsPage />;
+  if (path === "/administracao/usuarios") return <UsersPage />;
   return <PlaceholderPage label={label} />;
 };
 
@@ -91,6 +97,9 @@ export function AppRoutes() {
       <Route path="/logistics" element={<Navigate replace to="/logistica" />} />
       <Route path="/finance" element={<Navigate replace to="/financeiro" />} />
       <Route path="/checks" element={<Navigate replace to="/cheques-correios" />} />
+      <Route path="/settlements" element={<Navigate replace to="/acertos" />} />
+      <Route path="/reports" element={<Navigate replace to="/relatorios" />} />
+      <Route path="/users" element={<Navigate replace to="/administracao/usuarios" />} />
       <Route path="*" element={<Navigate replace to="/dashboard" />} />
     </Routes>
   );
