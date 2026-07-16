@@ -295,8 +295,9 @@ export interface Settlement {
   period: `${number}-${number}`;
   orderIds: string[];
   entries: SettlementEntry[];
+  amountPayable: number;
+  paymentsTotal: number;
   reportTotal: number;
-  payments: number;
   extras: number;
   balance: number;
   status: SettlementStatus;

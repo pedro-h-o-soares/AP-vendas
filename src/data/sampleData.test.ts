@@ -98,7 +98,10 @@ describe("representative sample data", () => {
 
     expect(settlement).toMatchObject({
       period: "2026-06",
+      amountPayable: 53_929.626,
+      paymentsTotal: 53_929.63,
       reportTotal: 53_929.63,
+      balance: 0.004,
       status: "settled",
     });
     expect(settlement?.entries).toContainEqual(
