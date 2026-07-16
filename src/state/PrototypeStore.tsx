@@ -23,6 +23,7 @@ import type {
   Order,
   OrderItem,
   OrderStatus,
+  OrderTimelineEvent,
   Party,
   Payment,
   PostalShipment,
@@ -58,9 +59,11 @@ export interface PrototypeStore {
   postalShipments: PostalShipment[];
   settlements: Settlement[];
   users: UserProfile[];
+  orderTimelineEvents: OrderTimelineEvent[];
   createQuote: (input: QuoteInput) => Order;
   convertQuoteToOrder: (quoteId: string, orderNumber: string) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Order;
+  appendOrderTimelineEvent: (input: Omit<OrderTimelineEvent, "id">) => OrderTimelineEvent;
   createIncident: (input: IncidentInput) => Incident;
   recordPayment: (input: PaymentInput) => Payment;
   createPostalShipment: (input: PostalShipmentInput) => PostalShipment;
@@ -79,6 +82,7 @@ interface DemoState {
   postalShipments: PostalShipment[];
   settlements: Settlement[];
   users: UserProfile[];
+  orderTimelineEvents: OrderTimelineEvent[];
 }
 
 const clone = <T,>(value: T): T => structuredClone(value);
@@ -94,6 +98,7 @@ const createDemoState = (): DemoState =>
     postalShipments: samplePostalShipments,
     settlements: sampleSettlements,
     users: sampleUsers,
+    orderTimelineEvents: [],
   });
 
 const replaceOrder = (orders: Order[], changed: Order): Order[] =>
@@ -145,6 +150,16 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
       orders: replaceOrder(current.orders, changed),
     }));
     return clone(changed);
+  };
+
+  const appendOrderTimelineEvent = (input: Omit<OrderTimelineEvent, "id">): OrderTimelineEvent => {
+    findOrder(input.orderId);
+    const event = clone({ ...input, id: nextId("order-event") });
+    setDemo((current) => ({
+      ...current,
+      orderTimelineEvents: [...current.orderTimelineEvents, event],
+    }));
+    return clone(event);
   };
 
   const createIncident = (input: IncidentInput): Incident => {
@@ -213,6 +228,7 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
         createQuote,
         convertQuoteToOrder,
         updateOrderStatus,
+        appendOrderTimelineEvent,
         createIncident,
         recordPayment,
         createPostalShipment,

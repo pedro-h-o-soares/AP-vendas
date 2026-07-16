@@ -119,6 +119,14 @@ export interface CommunicationEvent {
   description: string;
 }
 
+export interface OrderTimelineEvent {
+  id: string;
+  orderId: string;
+  date: string;
+  title: string;
+  detail?: string;
+}
+
 export interface Shipment {
   id: string;
   orderId: string;

@@ -1,34 +1,33 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../auth/AuthContext";
+import { can } from "../../auth/permissions";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { DataTable, type DataTableColumn } from "../../components/DataTable";
 import { StatusBadge } from "../../components/StatusBadge";
-import type { OrderItem, OrderStatus } from "../../domain/types";
+import type { OrderItem, OrderStatus, OrderTimelineEvent } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
-import { OrderTimeline, type OrderTimelineEvent } from "./OrderTimeline";
+import { OrderTimeline } from "./OrderTimeline";
+import { orderStatusLabels, orderStatusTone } from "./orderStatus";
 
 const tabs = ["Resumo", "Itens e valores", "Comunicações", "Carga e entrega", "Financeiro", "Ocorrências", "Histórico"] as const;
 type Tab = typeof tabs[number];
 
-const statusLabels: Partial<Record<OrderStatus, string>> = {
-  "in-transit": "Em trânsito",
-  delivered: "Entregue",
-};
-
 export function OrderDetailPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { orders, incidents, installments, payments, updateOrderStatus } = usePrototypeStore();
+  const { user } = useAuth();
+  const canEdit = Boolean(user && can(user.role, "edit-order"));
+  const { orders, incidents, installments, payments, orderTimelineEvents, updateOrderStatus, appendOrderTimelineEvent } = usePrototypeStore();
   const order = orders.find((candidate) => candidate.id === orderId);
   const [activeTab, setActiveTab] = useState<Tab>("Resumo");
   const [pendingStatus, setPendingStatus] = useState<OrderStatus>();
-  const [sessionEvents, setSessionEvents] = useState<OrderTimelineEvent[]>([]);
 
   const initialEvents = useMemo<OrderTimelineEvent[]>(() => {
     if (!order) return [];
     const events: OrderTimelineEvent[] = [];
-    if (order.orderedAt) events.push({ id: "ordered", date: order.orderedAt, title: "Pedido registrado" });
-    if (order.shipment?.shippedAt) events.push({ id: "shipment", date: order.shipment.shippedAt, title: "Embarque informado", detail: order.shipment.invoiceNumber ? `Nota ${order.shipment.invoiceNumber}` : undefined });
+    if (order.orderedAt) events.push({ id: "ordered", orderId: order.id, date: order.orderedAt, title: "Pedido registrado" });
+    if (order.shipment?.shippedAt) events.push({ id: "shipment", orderId: order.id, date: order.shipment.shippedAt, title: "Embarque informado", detail: order.shipment.invoiceNumber ? `Nota ${order.shipment.invoiceNumber}` : undefined });
     return events;
   }, [order]);
 
@@ -40,6 +39,7 @@ export function OrderDetailPage() {
   const orderIncidents = incidents.filter((incident) => incident.orderId === order.id);
   const orderInstallments = installments.filter((installment) => installment.orderId === order.id);
   const orderPayments = payments.filter((payment) => payment.orderId === order.id);
+  const persistedEvents = orderTimelineEvents.filter((event) => event.orderId === order.id);
   const itemColumns: DataTableColumn<OrderItem>[] = [
     { key: "description", header: "Item", render: (item) => item.description },
     { key: "quantity", header: "Quantidade", render: (item) => `${item.quantity} ${item.unit}` },
@@ -50,15 +50,15 @@ export function OrderDetailPage() {
   const confirmStatus = () => {
     if (!pendingStatus) return;
     updateOrderStatus(order.id, pendingStatus);
-    const label = statusLabels[pendingStatus] ?? pendingStatus;
-    setSessionEvents((current) => [...current, { id: `status-${current.length + 1}`, date: new Date().toLocaleDateString("pt-BR"), title: `Status alterado para ${label.toLocaleLowerCase("pt-BR")}` }]);
+    const label = orderStatusLabels[pendingStatus];
+    appendOrderTimelineEvent({ orderId: order.id, date: new Date().toISOString().slice(0, 10), title: `Status alterado para ${label.toLocaleLowerCase("pt-BR")}` });
     setPendingStatus(undefined);
   };
 
   const renderTab = () => {
     switch (activeTab) {
       case "Resumo":
-        return <div className="detail-grid"><article><h3>Partes</h3><p><strong>Cliente:</strong> {order.clientName}</p><p><strong>Fornecedor:</strong> {order.supplierName}</p></article><article><h3>Condições</h3><p>{order.paymentTerms}</p><p><StatusBadge tone="info">{order.status}</StatusBadge></p></article></div>;
+        return <div className="detail-grid"><article><h3>Partes</h3><p><strong>Cliente:</strong> {order.clientName}</p><p><strong>Fornecedor:</strong> {order.supplierName}</p></article><article><h3>Condições</h3><p>{order.paymentTerms}</p><p><StatusBadge tone={orderStatusTone(order.status)}>{orderStatusLabels[order.status]}</StatusBadge></p></article></div>;
       case "Itens e valores":
         return <><DataTable columns={itemColumns} rows={order.items} getRowId={(item) => item.id} emptyMessage="Nenhum item registrado" /><p className="detail-total"><strong>Valor líquido:</strong> {order.values?.net.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) ?? "—"}</p></>;
       case "Comunicações":
@@ -70,13 +70,13 @@ export function OrderDetailPage() {
       case "Ocorrências":
         return orderIncidents.length ? <ul>{orderIncidents.map((incident) => <li key={incident.id}><strong>{incident.title}</strong> · {incident.status}</li>)}</ul> : <p>Nenhuma ocorrência registrada.</p>;
       case "Histórico":
-        return <OrderTimeline events={[...initialEvents, ...sessionEvents]} />;
+        return <OrderTimeline events={[...initialEvents, ...persistedEvents]} />;
     }
   };
 
   return (
     <section aria-labelledby="order-title">
-      <header className="page-header"><div><button className="back-link" type="button" onClick={() => navigate("/pedidos")}>← Pedidos</button><h1 id="order-title">Pedido {reference}</h1><p>{order.clientName} · {order.supplierName}</p></div><div className="order-actions"><button type="button" onClick={() => setPendingStatus("in-transit")}>Marcar em trânsito</button><button type="button" onClick={() => setPendingStatus("delivered")}>Marcar como entregue</button></div></header>
+      <header className="page-header"><div><button className="back-link" type="button" onClick={() => navigate("/pedidos")}>← Pedidos</button><h1 id="order-title">Pedido {reference}</h1><p>{order.clientName} · {order.supplierName}</p></div>{canEdit && <div className="order-actions"><button type="button" onClick={() => setPendingStatus("in-transit")}>Marcar em trânsito</button><button type="button" onClick={() => setPendingStatus("delivered")}>Marcar como entregue</button></div>}</header>
 
       <div className="order-tabs" role="tablist" aria-label="Detalhes do pedido">
         {tabs.map((tab) => <button key={tab} type="button" role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}>{tab}</button>)}
@@ -87,7 +87,7 @@ export function OrderDetailPage() {
       </section>
 
       <ConfirmDialog title="Confirmar alteração de status" open={Boolean(pendingStatus)} onCancel={() => setPendingStatus(undefined)} onConfirm={confirmStatus}>
-        <p>Deseja alterar o pedido {reference} para {pendingStatus ? statusLabels[pendingStatus] : "este status"}?</p>
+        <p>Deseja alterar o pedido {reference} para {pendingStatus ? orderStatusLabels[pendingStatus] : "este status"}?</p>
       </ConfirmDialog>
     </section>
   );

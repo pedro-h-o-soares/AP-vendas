@@ -1,11 +1,5 @@
 import { StatusBadge } from "../../components/StatusBadge";
-
-export interface OrderTimelineEvent {
-  id: string;
-  date: string;
-  title: string;
-  detail?: string;
-}
+import type { OrderTimelineEvent } from "../../domain/types";
 
 interface OrderTimelineProps {
   events: OrderTimelineEvent[];
