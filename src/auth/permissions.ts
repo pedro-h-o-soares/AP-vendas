@@ -4,6 +4,8 @@ export type Permission =
   | "view-dashboard"
   | "view-orders"
   | "edit-order"
+  | "view-parties"
+  | "edit-parties"
   | "view-logistics"
   | "edit-logistics"
   | "view-finance"
@@ -20,6 +22,8 @@ const permissionsByRole: Record<Role, ReadonlySet<Permission>> = {
     "view-dashboard",
     "view-orders",
     "edit-order",
+    "view-parties",
+    "edit-parties",
     "view-logistics",
     "edit-logistics",
     "view-finance",
@@ -35,12 +39,15 @@ const permissionsByRole: Record<Role, ReadonlySet<Permission>> = {
     "view-dashboard",
     "view-orders",
     "edit-order",
+    "view-parties",
+    "edit-parties",
     "view-logistics",
     "edit-logistics",
   ]),
   finance: new Set<Permission>([
     "view-dashboard",
     "view-orders",
+    "view-parties",
     "view-finance",
     "record-payment",
     "view-checks",

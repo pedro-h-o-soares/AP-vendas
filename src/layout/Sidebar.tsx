@@ -1,9 +1,11 @@
 import {
   LayoutDashboard,
+  Factory,
   PanelLeftClose,
   PanelLeftOpen,
   ShoppingCart,
   Truck,
+  UsersRound,
   WalletCards,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -18,6 +20,8 @@ export interface SidebarProps {
 const destinations = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, permission: "view-dashboard" },
   { label: "Pedidos", to: "/pedidos", icon: ShoppingCart, permission: "view-orders" },
+  { label: "Clientes", to: "/clientes", icon: UsersRound, permission: "view-parties" },
+  { label: "Fornecedores", to: "/fornecedores", icon: Factory, permission: "view-parties" },
   { label: "Logística", to: "/logistics", icon: Truck, permission: "view-logistics" },
   { label: "Financeiro", to: "/finance", icon: WalletCards, permission: "view-finance" },
 ] satisfies { label: string; to: string; icon: typeof LayoutDashboard; permission: Permission }[];

@@ -60,6 +60,7 @@ export interface PrototypeStore {
   settlements: Settlement[];
   users: UserProfile[];
   orderTimelineEvents: OrderTimelineEvent[];
+  updateParty: (party: Party) => Party;
   createQuote: (input: QuoteInput) => Order;
   convertQuoteToOrder: (quoteId: string, orderNumber: string) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Order;
@@ -127,6 +128,19 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
       orders: [...current.orders, quote],
     }));
     return clone(quote);
+  };
+
+  const updateParty = (party: Party): Party => {
+    const currentParty = demo.parties.find(({ id }) => id === party.id);
+    if (!currentParty) throw new Error(`Party not found: ${party.id}`);
+    const changed = clone(party);
+    setDemo((current) => ({
+      ...current,
+      parties: current.parties.map((candidate) =>
+        candidate.id === changed.id ? changed : candidate,
+      ),
+    }));
+    return clone(changed);
   };
 
   const convertQuoteToOrder = (quoteId: string, orderNumber: string): Order => {
@@ -229,6 +243,7 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
         convertQuoteToOrder,
         updateOrderStatus,
         appendOrderTimelineEvent,
+        updateParty,
         createIncident,
         recordPayment,
         createPostalShipment,

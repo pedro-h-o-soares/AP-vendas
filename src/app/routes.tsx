@@ -6,6 +6,8 @@ import { LoginPage } from "../features/auth/LoginPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { OrderDetailPage } from "../features/orders/OrderDetailPage";
 import { OrdersPage } from "../features/orders/OrdersPage";
+import { ClientsPage } from "../features/parties/ClientsPage";
+import { SuppliersPage } from "../features/parties/SuppliersPage";
 import { AppShell } from "../layout/AppShell";
 
 export interface AppRouteDefinition {
@@ -19,6 +21,8 @@ export interface AppRouteDefinition {
 export const routeTable: AppRouteDefinition[] = [
   { path: "/dashboard", label: "Dashboard", permission: "view-dashboard" },
   { path: "/pedidos", label: "Pedidos", permission: "view-orders" },
+  { path: "/clientes", label: "Clientes", permission: "view-parties" },
+  { path: "/fornecedores", label: "Fornecedores", permission: "view-parties" },
   { path: "/logistics", label: "Logística", permission: "view-logistics" },
   { path: "/finance", label: "Financeiro", permission: "view-finance" },
   { path: "/checks", label: "Cheques", permission: "view-checks" },
@@ -41,8 +45,13 @@ function PlaceholderPage({ label }: { label: string }) {
   );
 }
 
-const pageForRoute = (path: string, label: string) =>
-  path === "/dashboard" ? <DashboardPage /> : path === "/pedidos" ? <OrdersPage /> : <PlaceholderPage label={label} />;
+const pageForRoute = (path: string, label: string) => {
+  if (path === "/dashboard") return <DashboardPage />;
+  if (path === "/pedidos") return <OrdersPage />;
+  if (path === "/clientes") return <ClientsPage />;
+  if (path === "/fornecedores") return <SuppliersPage />;
+  return <PlaceholderPage label={label} />;
+};
 
 export function AppRoutes() {
   return (

@@ -214,6 +214,112 @@ select:focus-visible {
   color: var(--color-danger);
 }
 
+.party-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.party-form .form-field:last-of-type,
+.party-form__actions {
+  grid-column: 1 / -1;
+}
+
+.party-form__actions,
+.party-detail__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
+.party-form__actions button,
+.party-detail__toolbar button {
+  min-height: 2.65rem;
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+  border: 0;
+  border-radius: 0.85rem;
+  background: rgba(111, 88, 217, 0.1);
+  font-weight: 750;
+}
+
+.party-form__actions .button-primary {
+  color: white;
+  background: var(--color-primary);
+}
+
+.party-detail {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.party-detail__toolbar {
+  justify-content: space-between;
+}
+
+.party-detail section {
+  padding: 1rem;
+  border: 1px solid rgba(111, 88, 217, 0.09);
+  border-radius: 1rem;
+  background: rgba(111, 88, 217, 0.04);
+}
+
+.party-detail section h3 {
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+}
+
+.party-detail section > p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.party-detail__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 0;
+}
+
+.party-detail__facts div {
+  min-width: 0;
+}
+
+.party-detail__facts dt {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.party-detail__facts dd {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.party-detail__list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.party-detail__list li {
+  display: grid;
+  grid-template-columns: minmax(5rem, 0.6fr) minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.7rem;
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.76);
+  font-size: 0.76rem;
+}
+
 .dashboard-section {
   margin-top: 2rem;
 }
@@ -654,6 +760,9 @@ select:focus-visible {
   .page-header { flex-direction: column; }
   .order-actions { justify-content: flex-start; }
   .detail-grid { grid-template-columns: 1fr; }
+  .party-form,
+  .party-detail__facts { grid-template-columns: 1fr; }
+  .party-detail__list li { grid-template-columns: 1fr; }
 
   .data-table thead {
     position: absolute;

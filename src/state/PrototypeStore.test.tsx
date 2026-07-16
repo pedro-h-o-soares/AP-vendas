@@ -104,6 +104,25 @@ describe("PrototypeStore", () => {
     });
   });
 
+  it("updates a party only in the in-memory provider state", () => {
+    const { result } = renderHook(() => usePrototypeStore(), { wrapper });
+    const party = result.current.parties[0];
+
+    act(() => {
+      const changed = result.current.updateParty({
+        ...party,
+        city: "Vitória",
+        phone: "(27) 99999-0000",
+      });
+      expect(changed).toMatchObject({ id: party.id, city: "Vitória" });
+    });
+
+    expect(result.current.parties.find(({ id }) => id === party.id)).toMatchObject({
+      city: "Vitória",
+      phone: "(27) 99999-0000",
+    });
+  });
+
   it("isolates nested demo records between providers and after reset", () => {
     const first = renderHook(() => usePrototypeStore(), { wrapper });
     const second = renderHook(() => usePrototypeStore(), { wrapper });

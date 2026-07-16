@@ -14,6 +14,8 @@ it("declares protected destinations with their permissions", () => {
   expect(routeTable.map(({ path, permission }) => ({ path, permission }))).toEqual([
     { path: "/dashboard", permission: "view-dashboard" },
     { path: "/pedidos", permission: "view-orders" },
+    { path: "/clientes", permission: "view-parties" },
+    { path: "/fornecedores", permission: "view-parties" },
     { path: "/logistics", permission: "view-logistics" },
     { path: "/finance", permission: "view-finance" },
     { path: "/checks", permission: "view-checks" },
