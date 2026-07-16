@@ -30,6 +30,7 @@ a {
 }
 
 button {
+  min-height: 2.75rem;
   color: inherit;
 }
 
@@ -41,7 +42,8 @@ a {
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+textarea:focus-visible {
   outline: 0.2rem solid color-mix(in srgb, var(--color-primary) 55%, white);
   outline-offset: 0.15rem;
 }

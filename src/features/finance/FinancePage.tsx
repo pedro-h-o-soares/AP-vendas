@@ -84,7 +84,16 @@ export function FinancePage() {
       <div className="finance-tabs" role="tablist" aria-label="Visões financeiras">
         {tabs.map((item, index) => <button aria-controls={`finance-panel-${item.value}`} aria-selected={tab === item.value} id={`finance-tab-${item.value}`} key={item.value} onClick={() => setTab(item.value)} onKeyDown={(event) => handleTabKeyDown(event, index)} role="tab" tabIndex={tab === item.value ? 0 : -1} type="button">{item.label}</button>)}
       </div>
-      <div aria-labelledby={`finance-tab-${tab}`} id={`finance-panel-${tab}`} role="tabpanel" tabIndex={0}>
+      {tabs.map((panel) => (
+        <div
+          aria-labelledby={`finance-tab-${panel.value}`}
+          hidden={tab !== panel.value}
+          id={`finance-panel-${panel.value}`}
+          key={panel.value}
+          role="tabpanel"
+          tabIndex={tab === panel.value ? 0 : -1}
+        >
+        {tab === panel.value && <>
       {(tab === "receivable" || tab === "payable") && <FilterBar label="Filtros financeiros">
         <label>Status financeiro<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">Todos</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label>Vencimento<input type="date" value={dueAt} onChange={(event) => setDueAt(event.target.value)} /></label>
@@ -104,7 +113,9 @@ export function FinancePage() {
       {tab === "movements" && (
         <section className="orders-table-panel" aria-labelledby="movements-heading"><h2 id="movements-heading">Movimentações registradas</h2><ul className="finance-movements">{payments.map((payment) => <li key={payment.id}><strong>{methodLabels[payment.method]}</strong><span>{payment.recipientName ?? payment.recipient}</span><span>{currency.format(payment.amount)}</span><time dateTime={payment.paidAt}>{payment.paidAt}</time></li>)}</ul></section>
       )}
-      </div>
+        </>}
+        </div>
+      ))}
       <InstallmentDrawer installment={selected} order={selectedOrder} open={Boolean(selected)} onClose={() => setSelectedId(undefined)} />
     </section>
   );
