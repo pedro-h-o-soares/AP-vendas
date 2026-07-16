@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { toLocalISODate } from "../../domain/localDate";
 import { usePrototypeStore } from "../../state/PrototypeStore";
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -7,7 +8,11 @@ export function CollectionsPanel() {
   const { collectionContacts, installments, orders, recordCollectionContact } = usePrototypeStore();
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [savedId, setSavedId] = useState<string>();
-  const overdue = installments.filter(({ status }) => status === "overdue");
+  const today = toLocalISODate();
+  const overdue = installments.filter((installment) =>
+    installment.dueAt < today
+    && installment.expectedAmount - (installment.actualAmount ?? 0) > 0,
+  );
 
   const submit = (event: FormEvent<HTMLFormElement>, installmentId: string) => {
     event.preventDefault();
@@ -35,7 +40,7 @@ export function CollectionsPanel() {
           >
             <div className="collection-card__heading">
               <div><strong>{order?.clientName ?? "Cliente não informado"}</strong><span>Pedido {order?.orderNumber ?? installment.orderId} · {order?.supplierName ?? "Fornecedor não informado"}</span></div>
-              <strong>{currency.format(installment.expectedAmount - (installment.actualAmount ?? 0))}</strong>
+              <strong>{currency.format(Math.max(0, installment.expectedAmount - (installment.actualAmount ?? 0)))}</strong>
             </div>
             <dl className="finance-facts">
               <div><dt>Último contato</dt><dd>{lastContact?.date ?? "Nenhum contato nesta sessão"}</dd></div>

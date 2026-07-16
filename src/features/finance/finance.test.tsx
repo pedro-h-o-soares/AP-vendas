@@ -55,6 +55,12 @@ function PaymentHarness() {
   );
 }
 
+function PartialCollectionHarness() {
+  const { installments } = usePrototypeStore();
+  const installment = installments.find(({ id }) => id === sampleOverdueInstallment.id)!;
+  return <><PaymentForm installment={installment} /><CollectionsPanel /></>;
+}
+
 describe("baixa financeira", () => {
   it("calcula a diferença entre R$ 6.217,14 e R$ 11.000,00", async () => {
     const user = await renderWithSession(
@@ -229,6 +235,58 @@ describe("financeiro e cobranças", () => {
     await user.click(screen.getByRole("tab", { name: "Cobranças" }));
 
     expect(screen.getByText("Retorno agendado na sessão")).toBeVisible();
+  });
+
+  it("mantém em cobrança uma parcela vencida parcialmente paga com o saldo aberto", async () => {
+    const user = await renderWithSession(<PartialCollectionHarness />);
+    const collection = screen.getByRole("article", { name: /cobrança 101 comercio.*parcela 1/i });
+    await user.type(within(collection).getByLabelText(/observação do contato/i), "Contato preservado após parcial");
+    await user.click(within(collection).getByRole("button", { name: /registrar contato/i }));
+
+    await user.type(screen.getByLabelText(/valor pago/i), "1000");
+    await user.selectOptions(screen.getByLabelText(/meio de pagamento/i), "direct");
+    await user.click(screen.getByRole("button", { name: /registrar baixa/i }));
+
+    const updatedCollection = screen.getByRole("article", { name: /cobrança 101 comercio.*parcela 1/i });
+    expect(within(updatedCollection).getByText(/R\$\s*531,03/)).toBeVisible();
+    expect(within(updatedCollection).getByText("Contato preservado após parcial")).toBeVisible();
+  });
+
+  it("usa a região do cliente quando o pedido não possui região própria", async () => {
+    const user = await renderWithSession(<FinancePage />);
+    const region = screen.getByLabelText(/região/i);
+
+    expect(within(region).getByRole("option", { name: "Norte do Espírito Santo" })).toBeVisible();
+    await user.selectOptions(region, "Norte do Espírito Santo");
+
+    expect(screen.getAllByRole("row", { name: /3824/i })).toHaveLength(5);
+    expect(screen.queryByRole("row", { name: /order-madepol-betini/i })).not.toBeInTheDocument();
+  });
+
+  it("implementa relações ARIA e navegação por teclado nas abas", async () => {
+    const user = await renderWithSession(<FinancePage />);
+    const receive = screen.getByRole("tab", { name: "A receber" });
+    const payable = screen.getByRole("tab", { name: "A pagar" });
+    const collections = screen.getByRole("tab", { name: "Cobranças" });
+    const movements = screen.getByRole("tab", { name: "Movimentações" });
+
+    expect(receive).toHaveAttribute("id", "finance-tab-receivable");
+    expect(receive).toHaveAttribute("aria-controls", "finance-panel-receivable");
+    expect(receive).toHaveAttribute("tabindex", "0");
+    const panel = screen.getByRole("tabpanel", { name: "A receber" });
+    expect(panel).toHaveAttribute("id", "finance-panel-receivable");
+    expect(panel).toHaveAttribute("aria-labelledby", "finance-tab-receivable");
+
+    receive.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(payable).toHaveFocus();
+    expect(payable).toHaveAttribute("aria-selected", "true");
+    await user.keyboard("{End}");
+    expect(movements).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(collections).toHaveFocus();
+    await user.keyboard("{Home}");
+    expect(receive).toHaveFocus();
   });
 });
 
