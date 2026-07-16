@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import { PrototypeStoreProvider } from "../../state/PrototypeStore";
 import { AnnualSupplierReport } from "./AnnualSupplierReport";
 import { ReportsPage } from "./ReportsPage";
+import { selectAnnualSupplierOrders } from "./annualReport";
+import { sampleOrders } from "../../data/sampleData";
 
 function renderReport(page: React.ReactNode) {
   return render(
@@ -15,6 +17,15 @@ function renderReport(page: React.ReactNode) {
 }
 
 describe("relatórios operacionais", () => {
+  it("seleciona o ano pela data canônica e exclui pedidos sem data ou de outro ano", () => {
+    const base = sampleOrders.find(({ supplierId }) => supplierId === "party-brasil-flora")!;
+    const withoutDate = { ...base, id: "without-date", orderedAt: undefined, shipment: undefined };
+    const orderedIn2027 = { ...base, id: "ordered-2027", orderedAt: "2027-02-10" as const, shipment: undefined };
+    const orderedIn2026 = { ...base, id: "ordered-2026", orderedAt: "2026-05-09" as const, shipment: undefined };
+
+    expect(selectAnnualSupplierOrders([withoutDate, orderedIn2027, orderedIn2026], "party-brasil-flora", 2026).map(({ id }) => id)).toEqual(["ordered-2026"]);
+  });
+
   it("resume pedidos, financeiro, embarques, incidentes e comissões com filtros", async () => {
     const user = userEvent.setup();
     renderReport(<ReportsPage />);
@@ -85,6 +96,7 @@ describe("relatórios operacionais", () => {
     expect(screen.queryByText(/AK199412308BR/)).not.toBeInTheDocument();
     expect(screen.queryByText(/PIGNATON/i)).not.toBeInTheDocument();
     expect(screen.getByText(/nenhuma postagem vinculada/i)).toBeVisible();
+    expect(within(screen.getByRole("table", { name: /vencimentos anuais/i })).getAllByRole("row")).toHaveLength(6);
     for (const table of screen.getAllByRole("table")) {
       expect(within(table).getAllByRole("columnheader").length).toBeLessThan(10);
     }

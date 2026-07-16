@@ -3,12 +3,13 @@ import { KpiCard } from "../../components/KpiCard";
 import type { Installment, Order, PostalShipment } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
 import { formatLocalDate } from "../../domain/localDate";
+import { selectAnnualSupplierOrders } from "./annualReport";
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 export function AnnualSupplierReport({ supplierId, year }: { supplierId: string; year: number }) {
   const { checks, installments, orders, parties, postalShipments } = usePrototypeStore();
-  const supplierOrders = orders.filter(({ supplierId: id, shipment }) => id === supplierId && (!shipment?.shippedAt || shipment.shippedAt.startsWith(`${year}-`)));
+  const supplierOrders = selectAnnualSupplierOrders(orders, supplierId, year);
   const supplierName = supplierOrders[0]?.supplierName ?? parties.find(({ id }) => id === supplierId)?.name ?? "Fornecedor";
   const orderIds = new Set(supplierOrders.map(({ id }) => id));
   const orderPostalIds = new Set(supplierOrders.flatMap(({ postalShipmentIds }) => postalShipmentIds ?? []));
