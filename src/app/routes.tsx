@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "../auth/ProtectedRoute";
 import { useAuth } from "../auth/AuthContext";
 import type { Permission } from "../auth/permissions";
-import { AccessDeniedPage } from "../features/auth/AccessDeniedPage";
 import { LoginPage } from "../features/auth/LoginPage";
 import { AppShell } from "../layout/AppShell";
 
@@ -43,7 +42,6 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginRoute />} />
-      <Route path="/access-denied" element={<AccessDeniedPage />} />
       {routeTable.map(({ label, path, permission }) => (
         <Route
           key={path}

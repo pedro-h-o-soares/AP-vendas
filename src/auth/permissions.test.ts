@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { Role } from "../domain/types";
 import { can, type Permission } from "./permissions";
 
 const allPermissions: Permission[] = [
@@ -18,23 +19,33 @@ const allPermissions: Permission[] = [
 ];
 
 describe("role permissions", () => {
-  it("allows administrators to use every permission", () => {
-    expect(allPermissions.every((permission) => can("admin", permission))).toBe(true);
-  });
+  const expectedByRole: Record<Role, Permission[]> = {
+    admin: allPermissions,
+    commercial: [
+      "view-dashboard",
+      "view-orders",
+      "edit-order",
+      "view-logistics",
+      "edit-logistics",
+    ],
+    finance: [
+      "view-dashboard",
+      "view-orders",
+      "view-finance",
+      "record-payment",
+      "view-checks",
+      "manage-checks",
+      "view-settlements",
+      "manage-settlements",
+      "view-reports",
+    ],
+  };
 
-  it("allows commercial users to edit orders but not record payments", () => {
-    expect(can("commercial", "edit-order")).toBe(true);
-    expect(can("commercial", "record-payment")).toBe(false);
-  });
-
-  it("allows finance users to record payments but not edit orders", () => {
-    expect(can("finance", "record-payment")).toBe(true);
-    expect(can("finance", "edit-order")).toBe(false);
-  });
-
-  it("keeps user management exclusive to administrators", () => {
-    expect(can("admin", "manage-users")).toBe(true);
-    expect(can("commercial", "manage-users")).toBe(false);
-    expect(can("finance", "manage-users")).toBe(false);
-  });
+  it.each<Role>(["admin", "commercial", "finance"])(
+    "matches the complete %s permission matrix",
+    (role) => {
+      const actual = allPermissions.filter((permission) => can(role, permission));
+      expect(actual).toEqual(expectedByRole[role]);
+    },
+  );
 });
