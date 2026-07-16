@@ -21,7 +21,7 @@ const overflowDestinations = [
   { label: "Clientes", to: "/clientes", permission: "view-parties" },
   { label: "Fornecedores", to: "/fornecedores", permission: "view-parties" },
   { label: "Ocorrências", to: "/ocorrencias", permission: "view-logistics" },
-  { label: "Cheques", to: "/checks", permission: "view-checks" },
+  { label: "Cheques e Correios", to: "/cheques-correios", permission: "view-checks" },
   { label: "Acertos", to: "/settlements", permission: "view-settlements" },
   { label: "Relatórios", to: "/reports", permission: "view-reports" },
   { label: "Usuários", to: "/users", permission: "manage-users" },

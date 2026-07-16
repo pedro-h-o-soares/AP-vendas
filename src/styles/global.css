@@ -819,6 +819,135 @@ select:focus-visible {
   overflow-x: auto;
 }
 
+.checks-tabs {
+  display: flex;
+  gap: 0.45rem;
+  margin: 1.25rem 0 0.9rem;
+}
+
+.checks-tabs button {
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 0.9rem;
+  color: var(--color-muted);
+  background: rgba(255, 255, 255, 0.54);
+  font-weight: 750;
+}
+
+.checks-tabs button[aria-selected="true"] {
+  border-color: rgba(111, 88, 217, 0.14);
+  color: var(--color-primary-strong);
+  background: rgba(111, 88, 217, 0.12);
+}
+
+.check-detail,
+.postal-form,
+.postal-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.check-facts,
+.postal-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.check-facts div,
+.postal-facts div {
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid rgba(111, 88, 217, 0.09);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.check-facts dt,
+.postal-facts dt,
+.postal-form__difference span {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.check-facts dd,
+.postal-facts dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.postal-form {
+  padding: 1rem;
+  border: 1px solid rgba(111, 88, 217, 0.1);
+  border-radius: 1rem;
+  background: rgba(111, 88, 217, 0.05);
+}
+
+.postal-form h3,
+.postal-card h2 {
+  margin: 0;
+}
+
+.postal-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.postal-form__grid .form-field:last-child {
+  grid-column: 1 / -1;
+}
+
+.postal-form__difference,
+.postal-card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.postal-form__difference {
+  padding: 0.8rem;
+  border-radius: 0.85rem;
+  color: #257862;
+  background: rgba(69, 166, 141, 0.1);
+}
+
+.postal-form > .button-primary,
+.postal-card > .button-primary {
+  justify-self: end;
+}
+
+.postal-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem;
+  border: 1px solid rgba(111, 88, 217, 0.1);
+  border-radius: var(--radius-card);
+  background: #fff;
+  background: var(--surface-glass);
+  box-shadow: 0 0.65rem 2rem rgba(61, 48, 119, 0.07);
+  backdrop-filter: blur(1rem);
+}
+
+.postal-card header span:first-child {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.postal-card h2 {
+  margin-top: 0.2rem;
+  font-size: 1rem;
+}
+
 .finance-tabs button {
   min-height: 2.75rem;
   flex: 0 0 auto;
@@ -1128,7 +1257,13 @@ select:focus-visible {
   .logistics-facts,
   .incident-form,
   .finance-facts,
-  .payment-form__conditional { grid-template-columns: 1fr; }
+  .payment-form__conditional,
+  .check-facts,
+  .postal-facts,
+  .postal-form__grid { grid-template-columns: 1fr; }
+  .postal-form__grid .form-field:last-child { grid-column: 1; }
+  .postal-form > .button-primary,
+  .postal-card > .button-primary { width: 100%; }
   .incident-form .form-field,
   .incident-form > button { grid-column: 1; }
   .incident-form > button { width: 100%; }

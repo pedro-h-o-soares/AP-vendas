@@ -30,6 +30,7 @@ import type {
   Party,
   Payment,
   PostalShipment,
+  PostalStatus,
   Settlement,
   Shipment,
   UserProfile,
@@ -83,6 +84,8 @@ export interface PrototypeStore {
   recordPayment: (input: PaymentInput) => Payment;
   recordCollectionContact: (installmentId: string, note: string) => CollectionContact;
   createPostalShipment: (input: PostalShipmentInput) => PostalShipment;
+  updateCheckStatus: (checkId: string, status: FinancialStatus) => Check;
+  updatePostalShipmentStatus: (shipmentId: string, status: PostalStatus, deliveredAt?: ISODate) => PostalShipment;
   resetDemo: () => void;
 }
 
@@ -359,6 +362,33 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
     return clone(shipment);
   };
 
+  const updateCheckStatus = (checkId: string, status: FinancialStatus): Check => {
+    const currentCheck = demo.checks.find(({ id }) => id === checkId);
+    if (!currentCheck) throw new Error(`Check not found: ${checkId}`);
+    const changed = { ...currentCheck, status };
+    setDemo((current) => ({
+      ...current,
+      checks: current.checks.map((check) => check.id === checkId ? changed : check),
+    }));
+    return clone(changed);
+  };
+
+  const updatePostalShipmentStatus = (shipmentId: string, status: PostalStatus, deliveredAt?: ISODate): PostalShipment => {
+    const currentShipment = demo.postalShipments.find(({ id }) => id === shipmentId);
+    if (!currentShipment) throw new Error(`Postal shipment not found: ${shipmentId}`);
+    const changed: PostalShipment = {
+      ...currentShipment,
+      status,
+      postedAt: status === "posted" && !currentShipment.postedAt ? toLocalISODate() : currentShipment.postedAt,
+      deliveredAt: status === "delivered" ? deliveredAt ?? toLocalISODate() : currentShipment.deliveredAt,
+    };
+    setDemo((current) => ({
+      ...current,
+      postalShipments: current.postalShipments.map((shipment) => shipment.id === shipmentId ? changed : shipment),
+    }));
+    return clone(changed);
+  };
+
   const resetDemo = () => {
     sequence.current = 0;
     setDemo(createDemoState());
@@ -379,6 +409,8 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
         recordPayment,
         recordCollectionContact,
         createPostalShipment,
+        updateCheckStatus,
+        updatePostalShipmentStatus,
         resetDemo,
       }}
     >

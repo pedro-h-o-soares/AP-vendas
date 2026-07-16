@@ -19,7 +19,7 @@ it("declares protected destinations with their permissions", () => {
     { path: "/logistica", permission: "view-logistics" },
     { path: "/ocorrencias", permission: "view-logistics" },
     { path: "/financeiro", permission: "view-finance" },
-    { path: "/checks", permission: "view-checks" },
+    { path: "/cheques-correios", permission: "view-checks" },
     { path: "/settlements", permission: "view-settlements" },
     { path: "/reports", permission: "view-reports" },
     { path: "/users", permission: "manage-users" },
