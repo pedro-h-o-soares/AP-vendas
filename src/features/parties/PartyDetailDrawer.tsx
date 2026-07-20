@@ -20,23 +20,16 @@ const partyOrders = (orders: Order[], party: Party) =>
   orders.filter((order) => party.kind === "client" ? order.clientId === party.id : order.supplierId === party.id);
 
 export function PartyDetailDrawer({ party, open, canEdit, onClose }: PartyDetailDrawerProps) {
-  const { incidents, installments, orders, payments, settlements, updateParty } = usePrototypeStore();
+  const { installments, orders, payments, updateParty } = usePrototypeStore();
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const relatedOrders = useMemo(() => party ? partyOrders(orders, party) : [], [orders, party]);
 
   if (!party) return null;
   const orderIds = new Set(relatedOrders.map(({ id }) => id));
-  const relatedShipments = relatedOrders.flatMap((order) => order.shipment ? [order.shipment] : []);
-  const relatedIncidents = incidents.filter((incident) => orderIds.has(incident.orderId));
   const financialRecipient = party.kind === "client" ? "client" : "supplier";
   const relatedInstallments = installments.filter((installment) => orderIds.has(installment.orderId) && installment.recipient === financialRecipient);
   const relatedPayments = payments.filter((payment) => orderIds.has(payment.orderId) && payment.recipient === financialRecipient);
-  const relatedSettlements = settlements.filter((settlement) =>
-    party.kind === "supplier"
-      ? settlement.supplierId === party.id
-      : settlement.orderIds.some((orderId) => orderIds.has(orderId)),
-  );
   const commercialTotal = relatedOrders.reduce((total, order) => total + (order.values?.net ?? 0), 0);
   const expectedTotal = relatedInstallments.reduce((total, item) => total + item.expectedAmount, 0);
   const paidTotal = relatedPayments.reduce((total, item) => total + item.amount, 0);
@@ -87,17 +80,7 @@ export function PartyDetailDrawer({ party, open, canEdit, onClose }: PartyDetail
 
           <section aria-labelledby="party-orders-title">
             <h3 id="party-orders-title">Histórico de pedidos</h3>
-            {relatedOrders.length ? <ul className="party-detail__list">{relatedOrders.map((order) => <li key={order.id}><strong>{order.orderNumber ?? "Orçamento"}</strong><span>{party.kind === "client" ? order.supplierName : order.clientName}</span><StatusBadge tone={orderStatusTone(order.status)}>{orderStatusLabels[order.status]}</StatusBadge></li>)}</ul> : <p>Nenhum pedido relacionado.</p>}
-          </section>
-
-          <section aria-labelledby="party-shipments-title">
-            <h3 id="party-shipments-title">Embarques relacionados</h3>
-            {relatedShipments.length ? <ul className="party-detail__list">{relatedShipments.map((shipment) => <li key={shipment.id}><strong>{shipment.invoiceNumber ? `NF ${shipment.invoiceNumber}` : "Embarque"}</strong><span>{shipment.shippedAt ?? "Data não informada"}</span><span>{shipment.deliveredAt ? "Entregue" : "Em acompanhamento"}</span></li>)}</ul> : <p>Nenhum embarque relacionado.</p>}
-          </section>
-
-          <section aria-labelledby="party-incidents-title">
-            <h3 id="party-incidents-title">Ocorrências</h3>
-            {relatedIncidents.length ? <ul className="party-detail__list">{relatedIncidents.map((incident) => <li key={incident.id}><strong>{incident.title}</strong><span>{incident.description}</span><span>{incident.status === "resolved" ? "Resolvida" : "Em acompanhamento"}</span></li>)}</ul> : <p>Nenhuma ocorrência relacionada.</p>}
+            {relatedOrders.length ? <ul className="party-detail__list">{relatedOrders.slice(0, 5).map((order) => <li key={order.id}><strong>{order.orderNumber ?? "Orçamento"}</strong><span>{party.kind === "client" ? order.supplierName : order.clientName}</span><StatusBadge tone={orderStatusTone(order.status)}>{orderStatusLabels[order.status]}</StatusBadge></li>)}</ul> : <p>Nenhum pedido relacionado.</p>}
           </section>
 
           <section aria-labelledby="party-finance-title">
@@ -108,11 +91,6 @@ export function PartyDetailDrawer({ party, open, canEdit, onClose }: PartyDetail
               <div><dt>{paidLabel}</dt><dd>{currency.format(paidTotal)}</dd></div>
               <div><dt>{differenceLabel}</dt><dd>{currency.format(paidTotal - expectedTotal)}</dd></div>
             </dl>
-          </section>
-
-          <section aria-labelledby="party-settlements-title">
-            <h3 id="party-settlements-title">Acertos relacionados</h3>
-            {relatedSettlements.length ? <ul className="party-detail__list">{relatedSettlements.map((settlement) => <li key={settlement.id}><strong>{settlement.period.split("-").reverse().join("/")}</strong><span>{currency.format(settlement.reportTotal)}</span><span>{settlement.status === "settled" ? "Acertado" : "Em conferência"}</span></li>)}</ul> : <p>Nenhum acerto relacionado.</p>}
           </section>
         </div>
       )}

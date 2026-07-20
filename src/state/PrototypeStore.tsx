@@ -43,6 +43,27 @@ type QuoteInput = Pick<
   items: OrderItem[];
 };
 
+export interface InstallmentConfig {
+  count: number;
+  intervalDays: number;
+  firstDueDays: number;
+}
+
+export type SupplierPaymentConfig =
+  | { type: "cash" }
+  | { type: "installments"; count: number; intervalDays: number; firstDueDays: number };
+
+type OrderInput = {
+  clientId: string;
+  clientName: string;
+  supplierId: string;
+  supplierName: string;
+  items: OrderItem[];
+  paymentTerms: string;
+  installmentConfig: InstallmentConfig;
+  supplierPaymentConfig: SupplierPaymentConfig;
+};
+
 type IncidentInput = Pick<
   Incident,
   "orderId" | "clientName" | "supplierName" | "title" | "description"
@@ -58,6 +79,7 @@ export interface CollectionContact {
   id: string;
   installmentId: string;
   date: ISODate;
+  time?: string;
   note: string;
 }
 
@@ -74,15 +96,22 @@ export interface PrototypeStore {
   orderTimelineEvents: OrderTimelineEvent[];
   collectionContacts: CollectionContact[];
   updateParty: (party: Party) => Party;
+  createOrder: (input: OrderInput) => Order;
   createQuote: (input: QuoteInput) => Order;
   convertQuoteToOrder: (quoteId: string, orderNumber: string) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Order;
+  updateOrder: (orderId: string, changes: Partial<Pick<Order, "clientName" | "supplierName" | "paymentTerms" | "region">>) => Order;
+  updateOrderItems: (orderId: string, items: OrderItem[]) => Order;
   appendOrderTimelineEvent: (input: Omit<OrderTimelineEvent, "id">) => OrderTimelineEvent;
   recordDelivery: (shipmentId: string, deliveredAt: ISODate) => Shipment;
+  createShipment: (orderId: string, input: Pick<Shipment, "shippedAt" | "invoiceNumber" | "driverName" | "route" | "expectedDeliveryAt">) => Shipment;
+  updateShipment: (shipmentId: string, input: Partial<Pick<Shipment, "shippedAt" | "invoiceNumber" | "driverName" | "route" | "expectedDeliveryAt">>) => Shipment;
   createIncident: (input: IncidentInput) => Incident;
+  updateIncidentStatus: (incidentId: string, status: Incident["status"]) => Incident;
   contactIncidentSupplier: (incidentId: string) => Incident;
   recordPayment: (input: PaymentInput) => Payment;
-  recordCollectionContact: (installmentId: string, note: string) => CollectionContact;
+  recordCollectionContact: (installmentId: string, note: string, time?: string) => CollectionContact;
+  updateInstallment: (installmentId: string, changes: Partial<Pick<Installment, "expectedAmount" | "dueAt" | "bank" | "branch" | "account" | "operation" | "notes">>) => Installment;
   createPostalShipment: (input: PostalShipmentInput) => PostalShipment;
   updateCheckStatus: (checkId: string, status: FinancialStatus) => Check;
   updatePostalShipmentStatus: (shipmentId: string, status: PostalStatus, deliveredAt?: ISODate) => PostalShipment;
@@ -156,6 +185,64 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
     return clone(quote);
   };
 
+  const createOrder = (input: OrderInput): Order => {
+    const client = demo.parties.find((party) => party.id === input.clientId);
+    const supplier = demo.parties.find((party) => party.id === input.supplierId);
+    const totalAmount = input.items.reduce((sum, item) => sum + item.total, 0);
+    const generatedInstallments: Installment[] = [];
+    for (let i = 0; i < input.installmentConfig.count; i++) {
+      const dueAt = new Date();
+      dueAt.setDate(dueAt.getDate() + input.installmentConfig.firstDueDays + i * input.installmentConfig.intervalDays);
+      generatedInstallments.push({
+        id: nextId("installment"),
+        orderId: `order-${nextId("tmp")}`,
+        sequence: i + 1,
+        totalInstallments: input.installmentConfig.count,
+        dueAt: dueAt.toISOString().slice(0, 10) as ISODate,
+        recipient: "client",
+        recipientName: input.clientName,
+        expectedAmount: totalAmount / input.installmentConfig.count,
+        status: "receivable",
+      });
+    }
+    if (input.supplierPaymentConfig.type === "installments") {
+      for (let i = 0; i < input.supplierPaymentConfig.count; i++) {
+        const dueAt = new Date();
+        dueAt.setDate(dueAt.getDate() + input.supplierPaymentConfig.firstDueDays + i * input.supplierPaymentConfig.intervalDays);
+        generatedInstallments.push({
+          id: nextId("installment"),
+          orderId: `order-${nextId("tmp")}`,
+          sequence: i + 1,
+          totalInstallments: input.supplierPaymentConfig.count,
+          dueAt: dueAt.toISOString().slice(0, 10) as ISODate,
+          recipient: "supplier",
+          recipientName: input.supplierName,
+          expectedAmount: totalAmount / input.supplierPaymentConfig.count,
+          status: "payable",
+        });
+      }
+    }
+    const installmentIds = [...generatedInstallments.map((inst) => inst.id)];
+    const order: Order = {
+      id: nextId("order"),
+      orderNumber: String(++sequence.current),
+      clientId: input.clientId,
+      clientName: input.clientName,
+      supplierId: input.supplierId,
+      supplierName: input.supplierName,
+      paymentTerms: input.paymentTerms,
+      status: "awaiting-supplier",
+      items: clone(input.items),
+      installmentIds,
+    };
+    setDemo((current) => ({
+      ...current,
+      orders: [...current.orders, order],
+      installments: [...current.installments, ...generatedInstallments.map((inst) => ({ ...inst, orderId: order.id }))],
+    }));
+    return clone(order);
+  };
+
   const updateParty = (party: Party): Party => {
     const currentParty = demo.parties.find(({ id }) => id === party.id);
     if (!currentParty) throw new Error(`Party not found: ${party.id}`);
@@ -185,6 +272,25 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
 
   const updateOrderStatus = (orderId: string, status: OrderStatus): Order => {
     const changed = { ...findOrder(orderId), status };
+    setDemo((current) => ({
+      ...current,
+      orders: replaceOrder(current.orders, changed),
+    }));
+    return clone(changed);
+  };
+
+  const updateOrder = (orderId: string, changes: Partial<Pick<Order, "clientName" | "supplierName" | "paymentTerms" | "region">>): Order => {
+    const changed = { ...findOrder(orderId), ...changes };
+    setDemo((current) => ({
+      ...current,
+      orders: replaceOrder(current.orders, changed),
+    }));
+    return clone(changed);
+  };
+
+  const updateOrderItems = (orderId: string, items: OrderItem[]): Order => {
+    const order = findOrder(orderId);
+    const changed: Order = { ...order, items: clone(items) };
     setDemo((current) => ({
       ...current,
       orders: replaceOrder(current.orders, changed),
@@ -236,15 +342,20 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   };
 
   const recordDelivery = (shipmentId: string, deliveredAt: ISODate): Shipment => {
-    const order = demo.orders.find(({ shipment }) => shipment?.id === shipmentId);
-    if (!order?.shipment) throw new Error(`Shipment not found: ${shipmentId}`);
+    const order = demo.orders.find(({ shipments }) => shipments?.some((s) => s.id === shipmentId));
+    const target = order?.shipments?.find((s) => s.id === shipmentId);
+    if (!order || !target) throw new Error(`Shipment not found: ${shipmentId}`);
     const shipment: Shipment = {
-      ...order.shipment,
+      ...target,
       deliveredAt,
       unloadingConfirmed: true,
       materialCheck: "matched",
     };
-    const changedOrder: Order = { ...order, shipment, status: "delivered" };
+    const changedOrder: Order = {
+      ...order,
+      shipments: order.shipments!.map((s) => s.id === shipmentId ? shipment : s),
+      status: "delivered",
+    };
     const event: OrderTimelineEvent = {
       id: nextId("order-event"),
       orderId: order.id,
@@ -258,6 +369,64 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
       orderTimelineEvents: [...current.orderTimelineEvents, event],
     }));
     return clone(shipment);
+  };
+
+  const createShipment = (orderId: string, input: Pick<Shipment, "shippedAt" | "invoiceNumber" | "driverName" | "route" | "expectedDeliveryAt">): Shipment => {
+    const order = demo.orders.find(({ id }) => id === orderId);
+    if (!order) throw new Error(`Order not found: ${orderId}`);
+    const shipment: Shipment = {
+      id: nextId("shipment"),
+      orderId,
+      ...input,
+    };
+    const changedOrder: Order = {
+      ...order,
+      shipments: [...(order.shipments ?? []), shipment],
+      status: order.status === "awaiting-supplier" || order.status === "quote" ? "shipment-informed" : order.status,
+    };
+    const event: OrderTimelineEvent = {
+      id: nextId("order-event"),
+      orderId,
+      date: toLocalISODate(),
+      title: "Embarque informado",
+      detail: input.invoiceNumber ? `Nota ${input.invoiceNumber}` : undefined,
+    };
+    setDemo((current) => ({
+      ...current,
+      orders: replaceOrder(current.orders, changedOrder),
+      orderTimelineEvents: [...current.orderTimelineEvents, event],
+    }));
+    return clone(shipment);
+  };
+
+  const updateShipment = (shipmentId: string, input: Partial<Pick<Shipment, "shippedAt" | "invoiceNumber" | "driverName" | "route" | "expectedDeliveryAt">>): Shipment => {
+    const order = demo.orders.find(({ shipments }) => shipments?.some((s) => s.id === shipmentId));
+    const target = order?.shipments?.find((s) => s.id === shipmentId);
+    if (!order || !target) throw new Error(`Shipment not found: ${shipmentId}`);
+    const shipment: Shipment = { ...target, ...input };
+    const changedOrder: Order = {
+      ...order,
+      shipments: order.shipments!.map((s) => s.id === shipmentId ? shipment : s),
+    };
+    setDemo((current) => ({
+      ...current,
+      orders: replaceOrder(current.orders, changedOrder),
+    }));
+    return clone(shipment);
+  };
+
+  const updateIncidentStatus = (incidentId: string, status: Incident["status"]): Incident => {
+    const current = demo.incidents.find(({ id }) => id === incidentId);
+    if (!current) throw new Error(`Incident not found: ${incidentId}`);
+    const changed = { ...current, status };
+    const date = toLocalISODate();
+    const event = { id: nextId("incident-event"), date, description: `Status alterado para ${status}` };
+    changed.timeline = [...current.timeline, event];
+    setDemo((currentState) => ({
+      ...currentState,
+      incidents: currentState.incidents.map((i) => i.id === incidentId ? changed : i),
+    }));
+    return clone(changed);
   };
 
   const contactIncidentSupplier = (incidentId: string): Incident => {
@@ -344,13 +513,24 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
     return clone(payment);
   };
 
-  const recordCollectionContact = (installmentId: string, note: string): CollectionContact => {
-    const contact = { id: nextId("collection-contact"), installmentId, date: toLocalISODate(), note };
+  const recordCollectionContact = (installmentId: string, note: string, time?: string): CollectionContact => {
+    const contact: CollectionContact = { id: nextId("collection-contact"), installmentId, date: toLocalISODate(), note, ...(time ? { time } : {}) };
     setDemo((current) => ({
       ...current,
       collectionContacts: [...current.collectionContacts, contact],
     }));
     return clone(contact);
+  };
+
+  const updateInstallment = (installmentId: string, changes: Partial<Pick<Installment, "expectedAmount" | "dueAt" | "bank" | "branch" | "account" | "operation" | "notes">>): Installment => {
+    const current = demo.installments.find(({ id }) => id === installmentId);
+    if (!current) throw new Error(`Installment not found: ${installmentId}`);
+    const changed: Installment = { ...current, ...changes };
+    setDemo((currentState) => ({
+      ...currentState,
+      installments: currentState.installments.map((i) => i.id === installmentId ? changed : i),
+    }));
+    return clone(changed);
   };
 
   const createPostalShipment = (input: PostalShipmentInput): PostalShipment => {
@@ -433,16 +613,23 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
     <PrototypeStoreContext.Provider
       value={{
         ...demo,
+        createOrder,
         createQuote,
         convertQuoteToOrder,
         updateOrderStatus,
+        updateOrder,
+        updateOrderItems,
         appendOrderTimelineEvent,
         recordDelivery,
+        createShipment,
+        updateShipment,
         updateParty,
         createIncident,
+        updateIncidentStatus,
         contactIncidentSupplier,
         recordPayment,
         recordCollectionContact,
+        updateInstallment,
         createPostalShipment,
         updateCheckStatus,
         updatePostalShipmentStatus,

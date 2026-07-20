@@ -22,7 +22,6 @@ const overflowDestinations = [
   { label: "Fornecedores", to: "/fornecedores", permission: "view-parties" },
   { label: "Ocorrências", to: "/ocorrencias", permission: "view-logistics" },
   { label: "Cheques e Correios", to: "/cheques-correios", permission: "view-checks" },
-  { label: "Acertos", to: "/acertos", permission: "view-settlements" },
   { label: "Relatórios", to: "/relatorios", permission: "view-reports" },
   { label: "Usuários", to: "/administracao/usuarios", permission: "manage-users" },
 ] satisfies { label: string; to: string; permission: Permission }[];

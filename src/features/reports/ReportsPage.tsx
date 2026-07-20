@@ -18,7 +18,7 @@ export function ReportsPage() {
   const [status, setStatus] = useState("all");
   const [region, setRegion] = useState("all");
   const filtered = orders.filter((order) => {
-    const date = order.orderedAt ?? order.shipment?.shippedAt;
+    const date = order.orderedAt ?? order.shipments?.[0]?.shippedAt;
     const relatedRegion = order.region ?? parties.find(({ id }) => id === order.clientId)?.region;
     const hasDateBoundary = Boolean(start || end);
     const matchesDate = !hasDateBoundary || Boolean(date && (!start || date >= start) && (!end || date <= end));
@@ -30,7 +30,7 @@ export function ReportsPage() {
   });
   const filteredIds = new Set(filtered.map(({ id }) => id));
   const financial = installments.filter(({ orderId }) => filteredIds.has(orderId));
-  const shipmentCount = filtered.filter(({ shipment }) => Boolean(shipment)).length;
+  const shipmentCount = filtered.filter(({ shipments }) => shipments?.length).length;
   const incidentCount = incidents.filter(({ orderId }) => filteredIds.has(orderId)).length;
   const commissionTotal = settlements.flatMap(({ entries }) => entries).filter(({ orderId }) => filteredIds.has(orderId)).reduce((sum, entry) => sum + entry.commission, 0);
   const financeTotal = financial.reduce((sum, item) => sum + item.expectedAmount, 0);

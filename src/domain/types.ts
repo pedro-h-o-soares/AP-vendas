@@ -173,7 +173,7 @@ export interface Order {
   communications?: CommunicationEvent[];
   items: OrderItem[];
   values?: CommercialValues;
-  shipment?: Shipment;
+  shipments?: Shipment[];
   installmentIds?: string[];
   paymentIds?: string[];
   checkIds?: string[];

@@ -46,7 +46,7 @@ export function DashboardPage() {
 
   const suppliers = [...new Set(orders.map((order) => order.supplierName))].sort();
   const regions = [...new Set(orders.map((order) => order.region).filter(Boolean))] as string[];
-  const orderDate = (order: Order) => order.orderedAt ?? order.shipment?.shippedAt;
+  const orderDate = (order: Order) => order.orderedAt ?? order.shipments?.[0]?.shippedAt;
   const datedOrders = orders.filter((order) => orderDate(order));
   const maximumDemoDate = Math.max(
     ...datedOrders.map((order) => new Date(`${orderDate(order)}T00:00:00`).getTime()),

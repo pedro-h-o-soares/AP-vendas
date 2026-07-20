@@ -25,7 +25,7 @@ export function AnnualSupplierReport({ supplierId, year }: { supplierId: string;
   const orderColumns: DataTableColumn<Order>[] = [
     { key: "number", header: "Pedido", render: (row) => row.orderNumber ?? "Em cotação" },
     { key: "client", header: "Cliente", render: (row) => row.clientName },
-    { key: "shipment", header: "Embarque", render: (row) => row.shipment?.shippedAt ? formatLocalDate(row.shipment.shippedAt) : "—" },
+    { key: "shipment", header: "Embarque", render: (row) => row.shipments?.[0]?.shippedAt ? formatLocalDate(row.shipments[0].shippedAt) : "—" },
     { key: "merchandise", header: "Mercadoria", align: "end", render: (row) => currency.format(row.values?.merchandise ?? 0) },
     { key: "net", header: "Líquido", align: "end", render: (row) => currency.format(row.values?.net ?? 0) },
   ];

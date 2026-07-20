@@ -69,10 +69,11 @@ describe("PrototypeStore", () => {
 
   it("records every delivery invariant and the integrated order timeline", () => {
     const { result } = renderHook(() => usePrototypeStore(), { wrapper });
-    const order = result.current.orders.find(({ shipment }) => Boolean(shipment))!;
+    const order = result.current.orders.find(({ shipments }) => shipments?.length)!;
+    const firstShipmentId = order.shipments![0]!.id;
 
     act(() => {
-      expect(result.current.recordDelivery(order.shipment!.id, "2026-07-16")).toMatchObject({
+      expect(result.current.recordDelivery(firstShipmentId, "2026-07-16")).toMatchObject({
         deliveredAt: "2026-07-16",
         unloadingConfirmed: true,
         materialCheck: "matched",
@@ -81,11 +82,11 @@ describe("PrototypeStore", () => {
 
     expect(result.current.orders.find(({ id }) => id === order.id)).toMatchObject({
       status: "delivered",
-      shipment: {
+      shipments: [expect.objectContaining({
         deliveredAt: "2026-07-16",
         unloadingConfirmed: true,
         materialCheck: "matched",
-      },
+      })],
     });
     expect(result.current.orderTimelineEvents).toContainEqual(expect.objectContaining({
       orderId: order.id,
@@ -96,13 +97,15 @@ describe("PrototypeStore", () => {
 
   it("links incident timelines without removing the shipment phase evidence", () => {
     const { result } = renderHook(() => usePrototypeStore(), { wrapper });
-    const order = result.current.orders.find(({ shipment }) => Boolean(shipment))!;
+    const order = result.current.orders.find(({ shipments }) => shipments?.length)!;
+    const firstShipmentId = order.shipments![0]!.id;
+    const firstShippedAt = order.shipments![0]!.shippedAt;
     let incidentId = "";
 
     act(() => {
       const incident = result.current.createIncident({
         orderId: order.id,
-        shipmentId: order.shipment!.id,
+        shipmentId: firstShipmentId,
         clientName: order.clientName,
         supplierName: order.supplierName,
         title: "Produto incorreto",
@@ -117,7 +120,7 @@ describe("PrototypeStore", () => {
     expect(result.current.orders.find(({ id }) => id === order.id)).toMatchObject({
       status: "incident",
       incidentIds: expect.arrayContaining([incidentId]),
-      shipment: { id: order.shipment!.id, shippedAt: order.shipment!.shippedAt },
+      shipments: [expect.objectContaining({ id: firstShipmentId, shippedAt: firstShippedAt })],
     });
     expect(result.current.orderTimelineEvents).toContainEqual(expect.objectContaining({
       orderId: order.id,

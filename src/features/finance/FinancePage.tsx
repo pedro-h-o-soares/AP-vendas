@@ -8,13 +8,12 @@ import { usePrototypeStore } from "../../state/PrototypeStore";
 import { CollectionsPanel } from "./CollectionsPanel";
 import { InstallmentDrawer } from "./InstallmentDrawer";
 
-type FinanceTab = "receivable" | "payable" | "collections" | "movements";
+type FinanceTab = "receivable" | "payable" | "collections";
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const tabs: { value: FinanceTab; label: string }[] = [
   { value: "receivable", label: "A receber" },
   { value: "payable", label: "A pagar" },
   { value: "collections", label: "Cobranças" },
-  { value: "movements", label: "Movimentações" },
 ];
 const statusLabels: Record<FinancialStatus, string> = {
   receivable: "A receber", payable: "A pagar", "due-soon": "Próximo do vencimento", overdue: "Atrasado",
@@ -25,33 +24,28 @@ const methodLabels: Record<PaymentMethod, string> = { pix: "PIX", check: "Cheque
 const isPayable = (installment: Installment) => installment.recipient === "supplier" || installment.recipient === "driver";
 
 export function FinancePage() {
-  const { installments, orders, parties, payments } = usePrototypeStore();
+  const { installments, orders, parties } = usePrototypeStore();
   const [tab, setTab] = useState<FinanceTab>("receivable");
   const [selectedId, setSelectedId] = useState<string>();
   const [status, setStatus] = useState("");
-  const [dueAt, setDueAt] = useState("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
   const [client, setClient] = useState("");
   const [supplier, setSupplier] = useState("");
-  const [region, setRegion] = useState("");
   const [method, setMethod] = useState("");
   const clients = parties.filter(({ kind }) => kind === "client");
   const suppliers = parties.filter(({ kind }) => kind === "supplier");
-  const regionForOrder = (order?: (typeof orders)[number]) =>
-    order?.region ?? clients.find(({ id }) => id === order?.clientId)?.region;
-  const regions = Array.from(new Set(orders.map((order) => regionForOrder(order)).filter(Boolean))) as string[];
-
   const orderFor = (installment: Installment) => orders.find(({ id }) => id === installment.orderId);
   const filtered = useMemo(() => installments.filter((installment) => {
     const order = orders.find(({ id }) => id === installment.orderId);
     const matchesDirection = tab === "payable" ? isPayable(installment) : !isPayable(installment);
     return matchesDirection
       && (!status || installment.status === status)
-      && (!dueAt || installment.dueAt === dueAt)
+      && (!start || !end || (installment.dueAt >= start && installment.dueAt <= end))
       && (!client || order?.clientId === client)
       && (!supplier || order?.supplierId === supplier)
-      && (!region || (order?.region ?? parties.find(({ id }) => id === order?.clientId)?.region) === region)
       && (!method || installment.method === method);
-  }), [client, dueAt, installments, method, orders, parties, region, status, supplier, tab]);
+  }), [client, start, end, installments, method, orders, parties, status, supplier, tab]);
   const selected = installments.find(({ id }) => id === selectedId);
   const selectedOrder = selected ? orderFor(selected) : undefined;
   const columns: DataTableColumn<Installment>[] = [
@@ -96,10 +90,10 @@ export function FinancePage() {
         {tab === panel.value && <>
       {(tab === "receivable" || tab === "payable") && <FilterBar label="Filtros financeiros">
         <label>Status financeiro<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">Todos</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <label>Vencimento<input type="date" value={dueAt} onChange={(event) => setDueAt(event.target.value)} /></label>
+        <label>Vencimento início<input type="date" value={start} onChange={(event) => setStart(event.target.value)} /></label>
+        <label>Vencimento fim<input type="date" value={end} onChange={(event) => setEnd(event.target.value)} /></label>
         <label>Cliente<select value={client} onChange={(event) => setClient(event.target.value)}><option value="">Todos</option>{clients.map((party) => <option key={party.id} value={party.id}>{party.name}</option>)}</select></label>
         <label>Fornecedor<select value={supplier} onChange={(event) => setSupplier(event.target.value)}><option value="">Todos</option>{suppliers.map((party) => <option key={party.id} value={party.id}>{party.name}</option>)}</select></label>
-        <label>Região<select value={region} onChange={(event) => setRegion(event.target.value)}><option value="">Todas</option>{regions.map((value) => <option key={value}>{value}</option>)}</select></label>
         <label>Meio de pagamento<select value={method} onChange={(event) => setMethod(event.target.value)}><option value="">Todos</option>{Object.entries(methodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       </FilterBar>}
 
@@ -110,9 +104,7 @@ export function FinancePage() {
         </section>
       )}
       {tab === "collections" && <CollectionsPanel />}
-      {tab === "movements" && (
-        <section className="orders-table-panel" aria-labelledby="movements-heading"><h2 id="movements-heading">Movimentações registradas</h2><ul className="finance-movements">{payments.map((payment) => <li key={payment.id}><strong>{methodLabels[payment.method]}</strong><span>{payment.recipientName ?? payment.recipient}</span><span>{currency.format(payment.amount)}</span><time dateTime={payment.paidAt}>{payment.paidAt}</time></li>)}</ul></section>
-      )}
+
         </>}
         </div>
       ))}

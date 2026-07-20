@@ -13,13 +13,6 @@
   "keywords": [],
   "author": "",
   "license": "UNLICENSED",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.7.0",
-      "onFail": "download"
-    }
-  },
   "type": "module",
   "dependencies": {
     "clsx": "^2.1.1",

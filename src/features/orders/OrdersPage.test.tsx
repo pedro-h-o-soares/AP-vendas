@@ -37,7 +37,8 @@ it("offers every operational filter and opens quote creation", async () => {
   expect(screen.getByLabelText(/responsável/i)).toBeVisible();
   expect(screen.getByLabelText(/cidade/i)).toBeVisible();
   expect(screen.getByLabelText(/região/i)).toBeVisible();
-  expect(screen.getByLabelText(/data do pedido/i)).toBeVisible();
+  expect(screen.getByLabelText(/período inicial/i)).toBeVisible();
+  expect(screen.getByLabelText(/período final/i)).toBeVisible();
   await user.click(screen.getByRole("button", { name: /novo orçamento/i }));
   expect(screen.getByRole("dialog", { name: /novo orçamento/i })).toBeVisible();
 });

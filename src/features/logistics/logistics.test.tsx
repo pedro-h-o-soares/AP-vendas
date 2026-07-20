@@ -16,7 +16,8 @@ function RoleSession({ children, role }: { children: ReactNode; role: Role }) {
 
 function DeliveryHarness() {
   const { orders } = usePrototypeStore();
-  const shipment = orders.find(({ shipment }) => shipment?.id === sampleShipment.id)?.shipment;
+  const order = orders.find(({ shipments }) => shipments?.some((s) => s.id === sampleShipment.id));
+  const shipment = order?.shipments?.find((s) => s.id === sampleShipment.id);
   return shipment ? <DeliveryForm shipment={shipment} /> : null;
 }
 
@@ -29,7 +30,7 @@ function IncidentTransitHarness() {
         type="button"
         onClick={() => createIncident({
           orderId: order.id,
-          shipmentId: order.shipment?.id,
+          shipmentId: order.shipments?.[0]?.id,
           clientName: order.clientName,
           supplierName: order.supplierName,
           title: "Item faltante",

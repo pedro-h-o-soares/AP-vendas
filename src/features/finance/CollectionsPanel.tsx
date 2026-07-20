@@ -7,6 +7,7 @@ const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "
 export function CollectionsPanel() {
   const { collectionContacts, installments, orders, recordCollectionContact } = usePrototypeStore();
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [contactTimes, setContactTimes] = useState<Record<string, string>>({});
   const [savedId, setSavedId] = useState<string>();
   const today = toLocalISODate();
   const overdue = installments.filter((installment) =>
@@ -18,8 +19,9 @@ export function CollectionsPanel() {
     event.preventDefault();
     const cleanNote = (notes[installmentId] ?? "").trim();
     if (!cleanNote) return;
-    recordCollectionContact(installmentId, cleanNote);
+    recordCollectionContact(installmentId, cleanNote, contactTimes[installmentId]);
     setNotes((current) => ({ ...current, [installmentId]: "" }));
+    setContactTimes((current) => ({ ...current, [installmentId]: "" }));
     setSavedId(installmentId);
   };
 
@@ -48,13 +50,14 @@ export function CollectionsPanel() {
               <div><dt>Visita ou coleta</dt><dd>Coleta indicada · demonstração</dd></div>
             </dl>
             <form className="collection-contact" onSubmit={(event) => submit(event, installment.id)}>
+              <label>Horário do contato<input type="time" value={contactTimes[installment.id] ?? ""} onChange={(event) => { setContactTimes((current) => ({ ...current, [installment.id]: event.target.value })); setSavedId(undefined); }} /></label>
               <label>Observação do contato<textarea required rows={3} value={notes[installment.id] ?? ""} onChange={(event) => { setNotes((current) => ({ ...current, [installment.id]: event.target.value })); setSavedId(undefined); }} /></label>
               <button className="button-primary" type="submit">Registrar contato</button>
             </form>
             {savedId === installment.id && <p className="session-notice" role="status">Contato registrado somente nesta sessão.</p>}
             {contacts.length > 0 && (
               <ul className="collection-history" aria-label={`Histórico da cobrança parcela ${installment.sequence}`}>
-                {contacts.map((contact) => <li key={contact.id}><time dateTime={contact.date}>{contact.date}</time><span>{contact.note}</span></li>)}
+                {contacts.map((contact) => <li key={contact.id}><time dateTime={contact.date}>{contact.date}{contact.time ? ` ${contact.time}` : ""}</time><span>{contact.note}</span></li>)}
               </ul>
             )}
           </article>

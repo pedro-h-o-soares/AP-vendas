@@ -19,9 +19,9 @@ function renderReport(page: React.ReactNode) {
 describe("relatórios operacionais", () => {
   it("seleciona o ano pela data canônica e exclui pedidos sem data ou de outro ano", () => {
     const base = sampleOrders.find(({ supplierId }) => supplierId === "party-brasil-flora")!;
-    const withoutDate = { ...base, id: "without-date", orderedAt: undefined, shipment: undefined };
-    const orderedIn2027 = { ...base, id: "ordered-2027", orderedAt: "2027-02-10" as const, shipment: undefined };
-    const orderedIn2026 = { ...base, id: "ordered-2026", orderedAt: "2026-05-09" as const, shipment: undefined };
+    const withoutDate = { ...base, id: "without-date", orderedAt: undefined, shipments: undefined };
+    const orderedIn2027 = { ...base, id: "ordered-2027", orderedAt: "2027-02-10" as const, shipments: undefined };
+    const orderedIn2026 = { ...base, id: "ordered-2026", orderedAt: "2026-05-09" as const, shipments: undefined };
 
     expect(selectAnnualSupplierOrders([withoutDate, orderedIn2027, orderedIn2026], "party-brasil-flora", 2026).map(({ id }) => id)).toEqual(["ordered-2026"]);
   });

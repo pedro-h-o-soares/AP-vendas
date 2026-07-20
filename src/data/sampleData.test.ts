@@ -24,7 +24,7 @@ describe("representative sample data", () => {
         tax: 115,
         net: 7_655.15,
       },
-      shipment: { invoiceNumber: "1448" },
+      shipments: [expect.objectContaining({ invoiceNumber: "1448" })],
     });
     expect(sampleShipment.shippedAt).toBe("2026-01-24");
   });

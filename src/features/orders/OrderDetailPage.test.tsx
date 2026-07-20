@@ -23,9 +23,9 @@ async function renderDetail(orderId = "order-brasil-flora-3824", role: Role = "a
   return user;
 }
 
-it("renders the exact seven order tabs and keeps the same order reference", async () => {
+it("renders the exact five order tabs and keeps the same order reference", async () => {
   const user = await renderDetail();
-  expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Resumo", "Itens e valores", "Comunicações", "Carga e entrega", "Financeiro", "Ocorrências", "Histórico"]);
+  expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Resumo", "Itens e valores", "Carga e entrega", "Financeiro", "Histórico"]);
   await user.click(screen.getByRole("tab", { name: "Carga e entrega" }));
   expect(screen.getByRole("tabpanel")).toHaveTextContent("3824");
 });
@@ -45,7 +45,7 @@ it("shows an order-not-found state", async () => {
 
 it("keeps finance users read-only while preserving every detail tab", async () => {
   await renderDetail("order-brasil-flora-3824", "finance");
-  expect(screen.getAllByRole("tab")).toHaveLength(7);
+  expect(screen.getAllByRole("tab")).toHaveLength(5);
   expect(screen.queryByRole("button", { name: /marcar em trânsito/i })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /marcar como entregue/i })).not.toBeInTheDocument();
 });

@@ -74,7 +74,7 @@ export const sampleOrders: Order[] = [
       receiptsOrExtras: 0,
       net: 7_655.15,
     },
-    shipment: sampleShipment,
+    shipments: [sampleShipment],
   },
   {
     id: "order-santa-clara-2026-06",

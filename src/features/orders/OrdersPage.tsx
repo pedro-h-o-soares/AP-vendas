@@ -25,7 +25,8 @@ export function OrdersPage() {
   const [owner, setOwner] = useState("");
   const [city, setCity] = useState("");
   const [region, setRegion] = useState("");
-  const [orderedAt, setOrderedAt] = useState("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
 
   const filteredOrders = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase("pt-BR");
@@ -37,17 +38,16 @@ export function OrdersPage() {
         && (!owner || order.ownerName === owner)
         && (!city || order.city === city)
         && (!region || order.region === region)
-        && (!orderedAt || order.orderedAt === orderedAt);
+        && (!start || !order.orderedAt || order.orderedAt >= start) && (!end || !order.orderedAt || order.orderedAt <= end);
     });
-  }, [city, orderedAt, orders, owner, region, search, status, supplier]);
+  }, [city, start, end, orders, owner, region, search, status, supplier]);
 
   const columns: DataTableColumn<Order>[] = [
     { key: "number", header: "Número", render: (order) => order.orderNumber ?? "Orçamento" },
     { key: "client", header: "Cliente", render: (order) => order.clientName },
     { key: "supplier", header: "Fornecedor", render: (order) => order.supplierName },
     { key: "date", header: "Data do pedido", render: (order) => order.orderedAt ?? "—" },
-    { key: "shipment", header: "Embarque", render: (order) => order.shipment?.shippedAt ?? "—" },
-    { key: "owner", header: "Responsável", render: (order) => order.ownerName ?? "—" },
+    { key: "shipment", header: "Embarque", render: (order) => order.shipments?.[0]?.shippedAt ?? "—" },
     { key: "status", header: "Status", render: (order) => <StatusBadge tone={orderStatusTone(order.status)}>{orderStatusLabels[order.status]}</StatusBadge> },
   ];
 
@@ -66,7 +66,8 @@ export function OrdersPage() {
         <label>Responsável<select value={owner} onChange={(event) => setOwner(event.target.value)}><option value="">Todos</option>{unique(orders.map((order) => order.ownerName)).map((value) => <option key={value}>{value}</option>)}</select></label>
         <label>Cidade<select value={city} onChange={(event) => setCity(event.target.value)}><option value="">Todas</option>{unique(orders.map((order) => order.city)).map((value) => <option key={value}>{value}</option>)}</select></label>
         <label>Região<select value={region} onChange={(event) => setRegion(event.target.value)}><option value="">Todas</option>{unique(orders.map((order) => order.region)).map((value) => <option key={value}>{value}</option>)}</select></label>
-        <label>Data do pedido<input type="date" value={orderedAt} onChange={(event) => setOrderedAt(event.target.value)} /></label>
+        <label>Período inicial<input type="date" value={start} onChange={(event) => setStart(event.target.value)} /></label>
+        <label>Período final<input type="date" value={end} onChange={(event) => setEnd(event.target.value)} /></label>
       </FilterBar>
 
       <section className="orders-table-panel" aria-label="Lista de pedidos">

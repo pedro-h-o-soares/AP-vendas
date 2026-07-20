@@ -7,6 +7,7 @@ import { AppRoutes } from "../../app/routes";
 import { AuthProvider, useAuth } from "../../auth/AuthContext";
 import { sampleInstallment, sampleOverdueInstallment } from "../../data/sampleData";
 import type { Role } from "../../domain/types";
+import { toLocalISODate } from "../../domain/localDate";
 import {
   PrototypeStoreProvider,
   usePrototypeStore,
@@ -169,21 +170,20 @@ describe("financeiro e cobranças", () => {
   it("mostra as quatro abas e todos os filtros financeiros", async () => {
     const user = await renderWithSession(<FinancePage />);
 
-    ["A receber", "A pagar", "Cobranças", "Movimentações"].forEach((tab) => {
+    ["A receber", "A pagar", "Cobranças"].forEach((tab) => {
       expect(screen.getByRole("tab", { name: tab })).toBeVisible();
     });
     [
       /status financeiro/i,
-      /vencimento/i,
+      /vencimento início/i,
+      /vencimento fim/i,
       /cliente/i,
       /fornecedor/i,
-      /região/i,
       /meio de pagamento/i,
     ].forEach((label) => expect(screen.getByLabelText(label)).toBeVisible());
 
     await user.click(screen.getByRole("tab", { name: "Cobranças" }));
     expect(screen.queryByLabelText(/status financeiro/i)).not.toBeInTheDocument();
-    await user.click(screen.getByRole("tab", { name: "Movimentações" }));
     expect(screen.queryByLabelText(/status financeiro/i)).not.toBeInTheDocument();
   });
 
@@ -216,7 +216,7 @@ describe("financeiro e cobranças", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent(/contato registrado somente nesta sessão/i);
     expect(screen.getByText("Cliente confirmou coleta amanhã")).toBeVisible();
-    expect(within(collection).getByText("Último contato").parentElement).toHaveTextContent("2026-07-16");
+    expect(within(collection).getByText("Último contato").parentElement).toHaveTextContent(toLocalISODate());
   });
 
   it("lista todas as parcelas vencidas como cobranças", async () => {
@@ -252,23 +252,11 @@ describe("financeiro e cobranças", () => {
     expect(within(updatedCollection).getByText("Contato preservado após parcial")).toBeVisible();
   });
 
-  it("usa a região do cliente quando o pedido não possui região própria", async () => {
-    const user = await renderWithSession(<FinancePage />);
-    const region = screen.getByLabelText(/região/i);
-
-    expect(within(region).getByRole("option", { name: "Norte do Espírito Santo" })).toBeVisible();
-    await user.selectOptions(region, "Norte do Espírito Santo");
-
-    expect(screen.getAllByRole("row", { name: /3824/i })).toHaveLength(5);
-    expect(screen.queryByRole("row", { name: /order-madepol-betini/i })).not.toBeInTheDocument();
-  });
-
   it("implementa relações ARIA e navegação por teclado nas abas", async () => {
     const user = await renderWithSession(<FinancePage />);
     const receive = screen.getByRole("tab", { name: "A receber" });
     const payable = screen.getByRole("tab", { name: "A pagar" });
     const collections = screen.getByRole("tab", { name: "Cobranças" });
-    const movements = screen.getByRole("tab", { name: "Movimentações" });
 
     expect(receive).toHaveAttribute("id", "finance-tab-receivable");
     expect(receive).toHaveAttribute("aria-controls", "finance-panel-receivable");
@@ -282,9 +270,9 @@ describe("financeiro e cobranças", () => {
     expect(payable).toHaveFocus();
     expect(payable).toHaveAttribute("aria-selected", "true");
     await user.keyboard("{End}");
-    expect(movements).toHaveFocus();
-    await user.keyboard("{ArrowLeft}");
     expect(collections).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(payable).toHaveFocus();
     await user.keyboard("{Home}");
     expect(receive).toHaveFocus();
   });

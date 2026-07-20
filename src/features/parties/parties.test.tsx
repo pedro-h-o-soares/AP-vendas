@@ -41,7 +41,6 @@ it("shows client contacts, conditions and linked operational history", async () 
   expect(within(drawer).getByText("cliente.101@demo.ogura.local")).toBeVisible();
   expect(within(drawer).getByText("30/45/60/75/90")).toBeVisible();
   expect(screen.getByRole("heading", { name: /histórico de pedidos/i })).toBeVisible();
-  expect(screen.getByRole("heading", { name: /embarques relacionados/i })).toBeVisible();
   expect(screen.getByRole("heading", { name: /resumo financeiro/i })).toBeVisible();
   expect(screen.getByText("3824")).toBeVisible();
   expect(within(drawer).getByText(/7\.655,15/)).toBeVisible();
@@ -55,8 +54,6 @@ it("shows supplier commission, cash discount and settlements", async () => {
 
   expect(screen.getByText("5,00%", { selector: "dd" })).toBeVisible();
   expect(screen.getByText("2,50%", { selector: "dd" })).toBeVisible();
-  expect(screen.getByRole("heading", { name: /acertos relacionados/i })).toBeVisible();
-  expect(screen.getByText("06/2026")).toBeVisible();
   expect(within(drawer).getByText("Contato demonstrativo Santa Rita")).toBeVisible();
   expect(within(drawer).getByText("(27) 99999-0202")).toBeVisible();
   expect(within(drawer).getByText("santa.rita@demo.ogura.local")).toBeVisible();
@@ -118,9 +115,7 @@ it("simulates a client edit in memory for authorized profiles", async () => {
   const user = await renderPage(<ClientsPage />, "commercial");
   await user.click(screen.getByRole("button", { name: /ver 101 comercio de madeiras/i }));
   await user.click(screen.getByRole("button", { name: /editar cadastro/i }));
-  const city = screen.getByLabelText("Cidade");
-  await user.clear(city);
-  await user.type(city, "Vitória");
+  await user.selectOptions(screen.getByLabelText("Cidade"), "Vitória");
   await user.type(screen.getByLabelText("Telefone"), "(27) 99999-0000");
   await user.click(screen.getByRole("button", { name: /salvar alterações/i }));
 

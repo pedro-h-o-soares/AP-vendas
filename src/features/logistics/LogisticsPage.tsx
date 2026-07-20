@@ -7,33 +7,37 @@ import type { Order } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
 import { ShipmentDrawer } from "./ShipmentDrawer";
 
-const status = (order: Order) => order.shipment?.deliveredAt ? "Entregue" : order.shipment?.shippedAt ? "Em trânsito" : "Embarque informado";
+const status = (order: Order) => {
+  const s = order.shipments?.[0];
+  if (s?.deliveredAt && order.status === "incident") return "Entregue com ocorrência";
+  return s?.deliveredAt ? "Entregue" : s?.shippedAt ? "Em trânsito" : "Embarque informado";
+};
 
 export function LogisticsPage() {
   const { orders } = usePrototypeStore();
   const [selectedId, setSelectedId] = useState<string>();
   const [search, setSearch] = useState("");
   const [shipmentStatus, setShipmentStatus] = useState("");
-  const shipments = orders.filter(({ shipment }) => Boolean(shipment));
+  const shipments = orders.filter(({ shipments }) => shipments?.length);
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("pt-BR");
     return shipments.filter((order) => {
-      const searchable = [order.orderNumber, order.clientName, order.supplierName, order.shipment?.invoiceNumber, order.shipment?.driverName].join(" ").toLocaleLowerCase("pt-BR");
+      const s = order.shipments?.[0];
+      const searchable = [order.orderNumber, order.clientName, order.supplierName, s?.invoiceNumber, s?.driverName].join(" ").toLocaleLowerCase("pt-BR");
       return (!term || searchable.includes(term)) && (!shipmentStatus || status(order) === shipmentStatus);
     });
   }, [search, shipmentStatus, shipments]);
   const selected = orders.find(({ id }) => id === selectedId);
   const columns: DataTableColumn<Order>[] = [
-    { key: "status", header: "Status", render: (order) => <StatusBadge tone={order.shipment?.deliveredAt ? "success" : "info"}>{status(order)}</StatusBadge> },
+    { key: "status", header: "Status", render: (order) => { const s = order.shipments?.[0]; return <StatusBadge tone={s?.deliveredAt ? "success" : "info"}>{status(order)}</StatusBadge>; } },
     { key: "client", header: "Cliente", render: (order) => order.clientName },
     { key: "supplier", header: "Fornecedor", render: (order) => order.supplierName },
-    { key: "note", header: "Nota", render: (order) => order.shipment?.noteNumber ?? "—" },
-    { key: "invoice", header: "Nota fiscal", render: (order) => order.shipment?.invoiceNumber ?? "—" },
-    { key: "driver", header: "Motorista", render: (order) => order.shipment?.driverName ?? "—" },
-    { key: "route", header: "Rota", render: (order) => order.shipment?.route ?? "—" },
-    { key: "departure", header: "Saída", render: (order) => order.shipment?.shippedAt ?? "—" },
-    { key: "forecast", header: "Previsão", render: (order) => order.shipment?.expectedDeliveryAt ?? "—" },
-    { key: "delivery", header: "Entrega", render: (order) => order.shipment?.deliveredAt ?? "Pendente" },
+    { key: "invoice", header: "Nota fiscal", render: (order) => order.shipments?.[0]?.invoiceNumber ?? "—" },
+    { key: "driver", header: "Motorista", render: (order) => order.shipments?.[0]?.driverName ?? "—" },
+    { key: "route", header: "Rota", render: (order) => order.shipments?.[0]?.route ?? "—" },
+    { key: "departure", header: "Saída", render: (order) => order.shipments?.[0]?.shippedAt ?? "—" },
+    { key: "forecast", header: "Previsão", render: (order) => order.shipments?.[0]?.expectedDeliveryAt ?? "—" },
+    { key: "delivery", header: "Entrega", render: (order) => order.shipments?.[0]?.deliveredAt ?? "Pendente" },
   ];
 
   return (
@@ -42,12 +46,12 @@ export function LogisticsPage() {
       <PrototypeNotice />
       <FilterBar label="Filtros de logística">
         <label>Buscar<input aria-label="Buscar embarques" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pedido, cliente, fornecedor ou NF" /></label>
-        <label>Status<select value={shipmentStatus} onChange={(event) => setShipmentStatus(event.target.value)}><option value="">Todos</option><option>Embarque informado</option><option>Em trânsito</option><option>Entregue</option></select></label>
+        <label>Status<select value={shipmentStatus} onChange={(event) => setShipmentStatus(event.target.value)}><option value="">Todos</option><option>Embarque informado</option><option>Em trânsito</option><option>Entregue</option><option>Entregue com ocorrência</option></select></label>
       </FilterBar>
       <section className="orders-table-panel" aria-label="Lista de embarques">
-        <DataTable ariaLabel="Embarques" columns={columns} rows={filtered} getRowId={(order) => order.shipment!.id} emptyMessage="Nenhum embarque para os filtros selecionados" rowAction={{ label: (order) => `Ver embarque ${order.orderNumber ?? order.id}`, onClick: (order) => setSelectedId(order.id) }} />
+        <DataTable ariaLabel="Embarques" columns={columns} rows={filtered} getRowId={(order) => order.shipments![0]!.id} emptyMessage="Nenhum embarque para os filtros selecionados" rowAction={{ label: (order) => `Ver embarque ${order.orderNumber ?? order.id}`, onClick: (order) => setSelectedId(order.id) }} />
       </section>
-      <ShipmentDrawer order={selected} shipment={selected?.shipment} open={Boolean(selected)} onClose={() => setSelectedId(undefined)} />
+      <ShipmentDrawer order={selected} shipment={selected?.shipments?.[0]} open={Boolean(selected)} onClose={() => setSelectedId(undefined)} />
     </section>
   );
 }

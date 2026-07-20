@@ -40,7 +40,7 @@ export function IncidentForm({ orderId }: IncidentFormProps) {
     }
     const created = createIncident({
       orderId,
-      shipmentId: order.shipment?.id,
+      shipmentId: order.shipments?.[0]?.id,
       clientName: order.clientName,
       supplierName: order.supplierName,
       title: titles[type],
