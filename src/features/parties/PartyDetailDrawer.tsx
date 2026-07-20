@@ -48,6 +48,7 @@ export function PartyDetailDrawer({ party, open, canEdit, onClose }: PartyDetail
       {editing ? (
         <PartyForm
           party={party}
+          kind={party.kind}
           onCancel={() => setEditing(false)}
           onSave={(changed) => {
             updateParty(changed);
@@ -60,7 +61,7 @@ export function PartyDetailDrawer({ party, open, canEdit, onClose }: PartyDetail
           {saved && <p className="session-notice" role="status">Cadastro atualizado somente nesta sessão.</p>}
           <div className="party-detail__toolbar">
             <StatusBadge tone="info">{party.kind === "client" ? "Cliente" : "Fornecedor"}</StatusBadge>
-            {canEdit && <button type="button" onClick={() => setEditing(true)}>Editar cadastro</button>}
+            {canEdit && <button className="button-secondary" type="button" onClick={() => setEditing(true)}>Editar cadastro</button>}
           </div>
 
           <section aria-labelledby="party-contact-title">

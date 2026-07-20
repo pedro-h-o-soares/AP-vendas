@@ -31,7 +31,7 @@ it("filters orders by client and status", async () => {
   expect(screen.queryByText("SERMAD")).not.toBeInTheDocument();
 });
 
-it("offers every operational filter and opens quote creation", async () => {
+it("offers every operational filter and opens order creation", async () => {
   const user = await renderOrders();
   expect(screen.getByLabelText(/fornecedor/i)).toBeVisible();
   expect(screen.getByLabelText(/responsável/i)).toBeVisible();
@@ -39,12 +39,12 @@ it("offers every operational filter and opens quote creation", async () => {
   expect(screen.getByLabelText(/região/i)).toBeVisible();
   expect(screen.getByLabelText(/período inicial/i)).toBeVisible();
   expect(screen.getByLabelText(/período final/i)).toBeVisible();
-  await user.click(screen.getByRole("button", { name: /novo orçamento/i }));
-  expect(screen.getByRole("dialog", { name: /novo orçamento/i })).toBeVisible();
+  await user.click(screen.getByRole("button", { name: /novo pedido/i }));
+  expect(screen.getByRole("dialog", { name: /novo pedido/i })).toBeVisible();
 });
 
 it("keeps finance users read-only on the orders list", async () => {
   await renderOrders("finance");
   expect(screen.getByRole("table", { name: "Pedidos" })).toBeVisible();
-  expect(screen.queryByRole("button", { name: /novo orçamento/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /novo pedido/i })).not.toBeInTheDocument();
 });

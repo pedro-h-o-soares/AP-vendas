@@ -3,7 +3,8 @@ import { FormField } from "../../components/FormField";
 import type { Party } from "../../domain/types";
 
 interface PartyFormProps {
-  party: Party;
+  party?: Party;
+  kind: Party["kind"];
   onSave: (party: Party) => void;
   onCancel: () => void;
 }
@@ -18,8 +19,9 @@ const optionalNumber = (value: string): number | undefined => {
   return Number(value) / 100;
 };
 
-export function PartyForm({ party, onSave, onCancel }: PartyFormProps) {
-  const [draft, setDraft] = useState(party);
+export function PartyForm({ party, kind, onSave, onCancel }: PartyFormProps) {
+  const defaultParty: Party = { id: "", kind, name: "" };
+  const [draft, setDraft] = useState(party ?? defaultParty);
   const [errors, setErrors] = useState<FormErrors>({});
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
@@ -132,8 +134,8 @@ export function PartyForm({ party, onSave, onCancel }: PartyFormProps) {
         <textarea rows={3} value={draft.notes ?? ""} onChange={(event) => setField("notes", event.target.value)} />
       </FormField>
       <div className="party-form__actions">
-        <button type="button" onClick={onCancel}>Cancelar</button>
-        <button className="button-primary" type="submit">Salvar alterações</button>
+        <button className="button-secondary" type="button" onClick={onCancel}>Cancelar</button>
+        <button className="button-primary" type="submit">{party ? "Salvar alterações" : "Criar"}</button>
       </div>
     </form>
   );

@@ -6,7 +6,7 @@ import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { DataTable, type DataTableColumn } from "../../components/DataTable";
 import { FormField } from "../../components/FormField";
 import { StatusBadge } from "../../components/StatusBadge";
-import type { ISODate, OrderItem, OrderStatus, OrderTimelineEvent, Shipment } from "../../domain/types";
+import type { FinancialStatus, ISODate, Installment, OrderItem, OrderStatus, OrderTimelineEvent, Shipment } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
 import { toLocalISODate } from "../../domain/localDate";
 import { OrderTimeline } from "./OrderTimeline";
@@ -70,6 +70,23 @@ export function OrderDetailPage() {
     { key: "route", header: "Rota", render: (s) => s.route ?? "—" },
     { key: "forecast", header: "Previsão", render: (s) => s.expectedDeliveryAt ?? "—" },
     { key: "delivery", header: "Entrega", render: (s) => s.deliveredAt ?? "Pendente" },
+  ];
+  const installmentStatusLabels: Record<FinancialStatus, string> = {
+    receivable: "A receber", payable: "A pagar", "due-soon": "Próximo do vencimento", overdue: "Atrasado",
+    "partially-paid": "Pago parcialmente", paid: "Pago", "under-review": "Em conferência", difference: "Com diferença",
+    overpaid: "Com diferença", settled: "Pago",
+  };
+  const installmentStatusTone = (status: FinancialStatus) => {
+    if (status === "overdue") return "danger" as const;
+    if (status === "paid" || status === "overpaid" || status === "settled") return "success" as const;
+    if (status === "due-soon" || status === "partially-paid" || status === "difference" || status === "under-review") return "warning" as const;
+    return "info" as const;
+  };
+  const installmentColumns: DataTableColumn<Installment>[] = [
+    { key: "sequence", header: "Parcela", render: (inst) => `${inst.sequence}/${inst.totalInstallments}` },
+    { key: "dueAt", header: "Vencimento", render: (inst) => inst.dueAt },
+    { key: "expectedAmount", header: "Valor", render: (inst) => inst.expectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), align: "end" },
+    { key: "status", header: "Status", render: (inst) => <StatusBadge tone={installmentStatusTone(inst.status)}>{installmentStatusLabels[inst.status]}</StatusBadge> },
   ];
 
   const confirmStatus = () => {
@@ -189,12 +206,12 @@ export function OrderDetailPage() {
     switch (activeTab) {
       case "Resumo":
         if (editingResumo) {
-          return <div className="detail-grid"><article><h3>Partes</h3><FormField label="Cliente"><input value={resumoClientName} onChange={(e) => setResumoClientName(e.target.value)} /></FormField><FormField label="Fornecedor"><input value={resumoSupplierName} onChange={(e) => setResumoSupplierName(e.target.value)} /></FormField></article><article><h3>Condições</h3><FormField label="Condições de pagamento"><input value={resumoPaymentTerms} onChange={(e) => setResumoPaymentTerms(e.target.value)} /></FormField><p><StatusBadge tone={orderStatusTone(order.status)}>{orderStatusLabels[order.status]}</StatusBadge></p></article><div className="order-form__submit"><button className="button-primary" type="button" onClick={saveEditResumo}>Salvar</button><button type="button" onClick={cancelEditResumo}>Cancelar</button></div></div>;
+          return <div className="detail-grid"><article><h3>Partes</h3><FormField label="Cliente"><input value={resumoClientName} onChange={(e) => setResumoClientName(e.target.value)} /></FormField><FormField label="Fornecedor"><input value={resumoSupplierName} onChange={(e) => setResumoSupplierName(e.target.value)} /></FormField></article><article><h3>Condições</h3><FormField label="Condições de pagamento"><input value={resumoPaymentTerms} onChange={(e) => setResumoPaymentTerms(e.target.value)} /></FormField><p><StatusBadge tone={orderStatusTone(order.status)}>{orderStatusLabels[order.status]}</StatusBadge></p></article><div className="order-form__submit"><button className="button-primary" type="button" onClick={saveEditResumo}>Salvar</button><button className="button-secondary" type="button" onClick={cancelEditResumo}>Cancelar</button></div></div>;
         }
         return <div className="detail-grid"><article><h3>Partes</h3><p><strong>Cliente:</strong> {order.clientName}</p><p><strong>Fornecedor:</strong> {order.supplierName}</p></article><article><h3>Condições</h3><p>{order.paymentTerms}</p><p><StatusBadge tone={orderStatusTone(order.status)}>{orderStatusLabels[order.status]}</StatusBadge></p></article>{canEdit && <div className="order-form__submit"><button type="button" className="button-secondary" onClick={startEditResumo}>Editar resumo</button></div>}</div>;
       case "Itens e valores":
         if (editingItens) {
-          return <><table className="order-edit-items"><thead><tr><th>Item</th><th>Quantidade</th><th>Un.</th><th>Preço unitário</th><th>Total</th><th></th></tr></thead><tbody>{editItems.map((item) => <tr key={item.id}><td><input value={item.description} onChange={(e) => updateEditItem(item.id, "description", e.target.value)} /></td><td><input type="number" value={item.quantity} onChange={(e) => updateEditItem(item.id, "quantity", Number(e.target.value))} /></td><td><input value={item.unit} onChange={(e) => updateEditItem(item.id, "unit", e.target.value)} /></td><td><input type="number" step="0.01" value={item.unitPrice} onChange={(e) => updateEditItem(item.id, "unitPrice", Number(e.target.value))} /></td><td>{item.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td><td><button type="button" onClick={() => removeEditItem(item.id)}>Remover</button></td></tr>)}</tbody></table><button type="button" className="button-secondary" onClick={addEditItem}>Adicionar item</button><div className="order-form__submit"><button className="button-primary" type="button" onClick={saveEditItens}>Salvar</button><button type="button" onClick={cancelEditItens}>Cancelar</button></div></>;
+          return <><table className="order-edit-items"><thead><tr><th>Item</th><th>Quantidade</th><th>Un.</th><th>Preço unitário</th><th>Total</th><th></th></tr></thead><tbody>{editItems.map((item) => <tr key={item.id}><td><input value={item.description} onChange={(e) => updateEditItem(item.id, "description", e.target.value)} /></td><td><input type="number" value={item.quantity} onChange={(e) => updateEditItem(item.id, "quantity", Number(e.target.value))} /></td><td><input value={item.unit} onChange={(e) => updateEditItem(item.id, "unit", e.target.value)} /></td><td><input type="number" step="0.01" value={item.unitPrice} onChange={(e) => updateEditItem(item.id, "unitPrice", Number(e.target.value))} /></td><td>{item.total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td><td><button className="button-secondary" type="button" onClick={() => removeEditItem(item.id)}>Remover</button></td></tr>)}</tbody></table><button type="button" className="button-secondary" onClick={addEditItem}>Adicionar item</button><div className="order-form__submit"><button className="button-primary" type="button" onClick={saveEditItens}>Salvar</button><button className="button-secondary" type="button" onClick={cancelEditItens}>Cancelar</button></div></>;
         }
         return <><DataTable columns={itemColumns} rows={order.items} getRowId={(item) => item.id} emptyMessage="Nenhum item registrado" /><p className="detail-total"><strong>Valor líquido:</strong> {order.values?.net.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) ?? "—"}</p>{canEdit && <div className="order-form__submit"><button type="button" className="button-secondary" onClick={startEditItens}>Editar itens</button></div>}</>;
       case "Carga e entrega":
@@ -206,12 +223,12 @@ export function OrderDetailPage() {
             <FormField label="Motorista"><input value={shipDriver} onChange={(e) => setShipDriver(e.target.value)} /></FormField>
             <FormField label="Rota"><input value={shipRoute} onChange={(e) => setShipRoute(e.target.value)} /></FormField>
             <FormField label="Previsão de entrega"><input type="date" value={shipExpectedAt} onChange={(e) => setShipExpectedAt(e.target.value)} /></FormField>
-            <div className="order-form__submit"><button className="button-primary" type="button" onClick={saveShipment}>{editShipmentId ? "Salvar" : "Adicionar"}</button><button type="button" onClick={() => { setEditing(false); setEditShipmentId(undefined); }}>Cancelar</button></div>
+            <div className="order-form__submit"><button className="button-primary" type="button" onClick={saveShipment}>{editShipmentId ? "Salvar" : "Adicionar"}</button><button className="button-secondary" type="button" onClick={() => { setEditing(false); setEditShipmentId(undefined); }}>Cancelar</button></div>
           </div> : canEdit && <div className="order-form__submit"><button type="button" className="button-secondary" onClick={startEditShipment}>Adicionar embarque</button></div>}
           {orderIncidents.length > 0 && <><h4>Ocorrências na entrega</h4><ul>{orderIncidents.map((incident) => <li key={incident.id}><strong>{incident.title}</strong> · {incident.status}<br />{incident.description}</li>)}</ul></>}
         </article></div>;
       case "Financeiro":
-        return <div className="detail-grid detail-grid--full"><article><h3>A receber</h3>{receivableInstallments.length ? <table className="detail-table"><thead><tr><th>Parcela</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead><tbody>{receivableInstallments.map((inst) => <tr key={inst.id}><td>{inst.sequence}/{inst.totalInstallments}</td><td>{inst.dueAt}</td><td>{inst.expectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td><td>{inst.status}</td></tr>)}</tbody></table> : <p>Nenhum registro.</p>}</article><article><h3>A pagar</h3>{payableInstallments.length ? <table className="detail-table"><thead><tr><th>Parcela</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead><tbody>{payableInstallments.map((inst) => <tr key={inst.id}><td>{inst.sequence}/{inst.totalInstallments}</td><td>{inst.dueAt}</td><td>{inst.expectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td><td>{inst.status}</td></tr>)}</tbody></table> : <p>Nenhum registro.</p>}</article></div>;
+        return <div className="detail-grid detail-grid--full"><article><h3>A receber</h3><DataTable columns={installmentColumns} rows={receivableInstallments} getRowId={(inst) => inst.id} emptyMessage="Nenhum registro." /></article><article><h3>A pagar</h3><DataTable columns={installmentColumns} rows={payableInstallments} getRowId={(inst) => inst.id} emptyMessage="Nenhum registro." /></article></div>;
       case "Histórico":
         return <OrderTimeline events={[...initialEvents, ...persistedEvents]} />;
     }

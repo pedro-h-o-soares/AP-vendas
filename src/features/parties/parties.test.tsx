@@ -102,7 +102,7 @@ it("excludes third-party recipient movements from the supplier financial summary
 it("validates name and at least one contact method", async () => {
   const user = userEvent.setup();
   const party: Party = { id: "new-client", kind: "client", name: "" };
-  render(<PartyForm party={party} onCancel={() => undefined} onSave={() => undefined} />);
+  render(<PartyForm party={party} kind={party.kind} onCancel={() => undefined} onSave={() => undefined} />);
 
   await user.click(screen.getByRole("button", { name: /salvar alterações/i }));
 

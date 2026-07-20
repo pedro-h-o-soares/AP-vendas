@@ -108,7 +108,7 @@ export function ShipmentDrawer({ order, shipment, open, onClose }: ShipmentDrawe
             <FormField label="Motorista"><input value={editDriver} onChange={(e) => setEditDriver(e.target.value)} /></FormField>
             <FormField label="Rota"><input value={editRoute} onChange={(e) => setEditRoute(e.target.value)} /></FormField>
             <FormField label="Previsão"><input type="date" value={editExpectedAt} onChange={(e) => setEditExpectedAt(e.target.value)} /></FormField>
-            <div className="order-form__submit"><button className="button-primary" type="button" onClick={saveEdit}>Salvar</button><button type="button" onClick={cancelEdit}>Cancelar</button></div>
+            <div className="order-form__submit"><button className="button-primary" type="button" onClick={saveEdit}>Salvar</button><button className="button-secondary" type="button" onClick={cancelEdit}>Cancelar</button></div>
           </div>
         ) : (
           <>
@@ -140,7 +140,7 @@ export function ShipmentDrawer({ order, shipment, open, onClose }: ShipmentDrawe
               <FormField label="Tipo"><select value={incidentType} onChange={(e) => setIncidentType(e.target.value as IncidentType)}>{Object.entries(incidentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></FormField>
               <FormField label="Prioridade"><select value={incidentPriority} onChange={(e) => setIncidentPriority(e.target.value as IncidentPriority)}>{Object.entries(incidentPriorityLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></FormField>
               <FormField label="Descrição"><textarea value={incidentDescription} onChange={(e) => setIncidentDescription(e.target.value)} /></FormField>
-              <div className="order-form__submit"><button className="button-primary" type="button" onClick={submitIncident}>Registrar</button><button type="button" onClick={() => setShowIncidentForm(false)}>Cancelar</button></div>
+              <div className="order-form__submit"><button className="button-primary" type="button" onClick={submitIncident}>Registrar</button><button className="button-secondary" type="button" onClick={() => setShowIncidentForm(false)}>Cancelar</button></div>
             </div>
           ) : <button type="button" className="button-secondary" onClick={() => setShowIncidentForm(true)}>Registrar ocorrência</button>}
         </section>

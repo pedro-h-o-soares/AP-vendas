@@ -20,7 +20,7 @@ const primaryDestinations = [
 const overflowDestinations = [
   { label: "Clientes", to: "/clientes", permission: "view-parties" },
   { label: "Fornecedores", to: "/fornecedores", permission: "view-parties" },
-  { label: "Ocorrências", to: "/ocorrencias", permission: "view-logistics" },
+  // { label: "Ocorrências", to: "/ocorrencias", permission: "view-logistics" },
   { label: "Cheques e Correios", to: "/cheques-correios", permission: "view-checks" },
   { label: "Relatórios", to: "/relatorios", permission: "view-reports" },
   { label: "Usuários", to: "/administracao/usuarios", permission: "manage-users" },

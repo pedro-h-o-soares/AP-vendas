@@ -28,7 +28,7 @@ const destinations = [
   { label: "Clientes", to: "/clientes", icon: UsersRound, permission: "view-parties" },
   { label: "Fornecedores", to: "/fornecedores", icon: Factory, permission: "view-parties" },
   { label: "Logística", to: "/logistica", icon: Truck, permission: "view-logistics" },
-  { label: "Ocorrências", to: "/ocorrencias", icon: TriangleAlert, permission: "view-logistics" },
+  // { label: "Ocorrências", to: "/ocorrencias", icon: TriangleAlert, permission: "view-logistics" },
   { label: "Financeiro", to: "/financeiro", icon: WalletCards, permission: "view-finance" },
   { label: "Cheques e Correios", to: "/cheques-correios", icon: MailCheck, permission: "view-checks" },
   { label: "Relatórios", to: "/relatorios", icon: BarChart3, permission: "view-reports" },

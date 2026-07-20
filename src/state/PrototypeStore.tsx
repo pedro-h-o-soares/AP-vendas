@@ -96,6 +96,7 @@ export interface PrototypeStore {
   orderTimelineEvents: OrderTimelineEvent[];
   collectionContacts: CollectionContact[];
   updateParty: (party: Party) => Party;
+  createParty: (input: Omit<Party, "id">) => Party;
   createOrder: (input: OrderInput) => Order;
   createQuote: (input: QuoteInput) => Order;
   convertQuoteToOrder: (quoteId: string, orderNumber: string) => Order;
@@ -221,6 +222,21 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
           status: "payable",
         });
       }
+    } else {
+      const dueAt = new Date();
+      dueAt.setDate(dueAt.getDate() + 1);
+      const discountRate = supplier?.cashDiscountRate ?? 0;
+      generatedInstallments.push({
+        id: nextId("installment"),
+        orderId: `order-${nextId("tmp")}`,
+        sequence: 1,
+        totalInstallments: 1,
+        dueAt: dueAt.toISOString().slice(0, 10) as ISODate,
+        recipient: "supplier",
+        recipientName: input.supplierName,
+        expectedAmount: totalAmount * (1 - discountRate),
+        status: "payable",
+      });
     }
     const installmentIds = [...generatedInstallments.map((inst) => inst.id)];
     const order: Order = {
@@ -254,6 +270,15 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
       ),
     }));
     return clone(changed);
+  };
+
+  const createParty = (input: Omit<Party, "id">): Party => {
+    const party = clone({ ...input, id: nextId("party") });
+    setDemo((current) => ({
+      ...current,
+      parties: [...current.parties, party],
+    }));
+    return clone(party);
   };
 
   const convertQuoteToOrder = (quoteId: string, orderNumber: string): Order => {
@@ -624,6 +649,7 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
         createShipment,
         updateShipment,
         updateParty,
+        createParty,
         createIncident,
         updateIncidentStatus,
         contactIncidentSupplier,

@@ -8,7 +8,7 @@ import { PrototypeNotice } from "../../components/PrototypeNotice";
 import { StatusBadge } from "../../components/StatusBadge";
 import type { Order } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
-import { QuoteWizard } from "./QuoteWizard";
+import { OrderForm } from "./OrderForm";
 import { orderStatusLabels, orderStatusTone } from "./orderStatus";
 
 const unique = (values: Array<string | undefined>) => [...new Set(values.filter((value): value is string => Boolean(value)))].sort();
@@ -18,7 +18,7 @@ export function OrdersPage() {
   const { user } = useAuth();
   const canEdit = Boolean(user && can(user.role, "edit-order"));
   const navigate = useNavigate();
-  const [wizardOpen, setWizardOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [supplier, setSupplier] = useState("");
@@ -55,7 +55,7 @@ export function OrdersPage() {
     <section aria-labelledby="orders-title">
       <header className="page-header">
         <div><span className="page-eyebrow">Operação comercial</span><h1 id="orders-title">Pedidos</h1><p>Orçamentos e pedidos integrados em uma única jornada.</p></div>
-        {canEdit && <button className="button-primary" type="button" onClick={() => setWizardOpen(true)}>Novo orçamento</button>}
+        {canEdit && <button className="button-primary" type="button" onClick={() => setFormOpen(true)}>Novo pedido</button>}
       </header>
       <PrototypeNotice />
 
@@ -73,7 +73,7 @@ export function OrdersPage() {
       <section className="orders-table-panel" aria-label="Lista de pedidos">
         <DataTable ariaLabel="Pedidos" columns={columns} rows={filteredOrders} getRowId={(order) => order.id} emptyMessage="Nenhum pedido para os filtros selecionados" rowAction={{ label: () => "Ver pedido", onClick: (order) => navigate(`/pedidos/${order.id}`) }} />
       </section>
-      {canEdit && <QuoteWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />}
+      {canEdit && <OrderForm open={formOpen} onClose={() => setFormOpen(false)} />}
     </section>
   );
 }

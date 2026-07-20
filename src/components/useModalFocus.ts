@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 
 const focusableSelector = [
   "a[href]",
@@ -15,6 +15,9 @@ export function useModalFocus(
   containerRef: RefObject<HTMLElement | null>,
   initialFocusRef: RefObject<HTMLElement | null>,
 ) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!open) return;
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -23,7 +26,7 @@ export function useModalFocus(
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab") return;
@@ -51,5 +54,5 @@ export function useModalFocus(
       document.removeEventListener("keydown", handleKeyDown);
       previousFocus?.focus();
     };
-  }, [containerRef, initialFocusRef, onClose, open]);
+  }, [containerRef, initialFocusRef, open]);
 }
