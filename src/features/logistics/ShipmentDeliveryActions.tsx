@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { BadgeAlert, TriangleAlert } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { can } from "../../auth/permissions";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { FormField } from "../../components/FormField";
 import { StatusBadge } from "../../components/StatusBadge";
-import type { IncidentPriority, IncidentStatus, IncidentType, Order, Shipment } from "../../domain/types";
+import { useModalFocus } from "../../components/useModalFocus";
+import type { Incident, IncidentPriority, IncidentStatus, IncidentType, Order, Shipment } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
 import { DeliveryForm } from "./DeliveryForm";
 
@@ -39,6 +41,7 @@ export function ShipmentDeliveryActions({ order, shipment, compact = false }: Sh
   const { user } = useAuth();
   const { createIncident, incidents, updateIncidentStatus } = usePrototypeStore();
   const [showIncidentForm, setShowIncidentForm] = useState(false);
+  const [showIncidentDetails, setShowIncidentDetails] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [incidentType, setIncidentType] = useState<IncidentType>("other");
   const [incidentPriority, setIncidentPriority] = useState<IncidentPriority>("medium");
@@ -63,43 +66,14 @@ export function ShipmentDeliveryActions({ order, shipment, compact = false }: Sh
     setIncidentType("other");
     setIncidentPriority("medium");
     setIncidentDescription("");
-    setShowIncidentForm(Boolean(incident));
+    setShowIncidentDetails(Boolean(incident));
+    setShowIncidentForm(false);
   };
 
   return (
     <section className={`shipment-delivery-actions${compact ? " shipment-delivery-actions--compact" : ""}`} aria-label="Ações de entrega">
       <DeliveryForm shipment={shipment} showHeading={!compact} compact={compact} />
-      {showIncidentForm && linkedIncident ? (
-        <div className="shipment-incident-detail" aria-label="Detalhes da ocorrência">
-          <div className="shipment-incident-detail__heading">
-            <strong>{linkedIncident.title}</strong>
-            <StatusBadge tone={linkedIncident.status === "cancelled" ? "neutral" : linkedIncident.status === "resolved" ? "success" : "warning"}>
-              {incidentStatusLabels[linkedIncident.status]}
-            </StatusBadge>
-          </div>
-          <dl>
-            <div><dt>Tipo</dt><dd>{incidentTypeLabels[linkedIncident.type]}</dd></div>
-            <div><dt>Prioridade</dt><dd>{incidentPriorityLabels[linkedIncident.priority]}</dd></div>
-            <div><dt>Descrição</dt><dd>{linkedIncident.description}</dd></div>
-          </dl>
-          {linkedIncident.status !== "cancelled" && (
-            <button className="button-secondary" type="button" onClick={() => setConfirmingCancel(true)}>Cancelar ocorrência</button>
-          )}
-          <button className="button-secondary" type="button" onClick={() => setShowIncidentForm(false)}>Fechar detalhes</button>
-          <ConfirmDialog
-            title="Cancelar ocorrência"
-            open={confirmingCancel}
-            onCancel={() => setConfirmingCancel(false)}
-            onConfirm={() => {
-              updateIncidentStatus(linkedIncident.id, "cancelled");
-              setConfirmingCancel(false);
-            }}
-            confirmLabel="Cancelar ocorrência"
-          >
-            <p>A ocorrência continuará vinculada ao embarque, mas ficará marcada como cancelada.</p>
-          </ConfirmDialog>
-        </div>
-      ) : showIncidentForm ? (
+      {showIncidentForm ? (
         <div className="order-form">
           <FormField label="Tipo"><select value={incidentType} onChange={(event) => setIncidentType(event.target.value as IncidentType)}>{Object.entries(incidentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></FormField>
           <FormField label="Prioridade"><select value={incidentPriority} onChange={(event) => setIncidentPriority(event.target.value as IncidentPriority)}>{Object.entries(incidentPriorityLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></FormField>
@@ -110,13 +84,101 @@ export function ShipmentDeliveryActions({ order, shipment, compact = false }: Sh
         <button
           type="button"
           className={`action-icon action-icon--warning${linkedIncident ? " action-icon--linked" : ""}`}
-          onClick={() => setShowIncidentForm(true)}
+          onClick={() => linkedIncident ? setShowIncidentDetails(true) : setShowIncidentForm(true)}
           aria-label={linkedIncident ? `Ver ocorrência vinculada: ${linkedIncident.title}` : "Registrar ocorrência"}
           title={linkedIncident ? `Ocorrência vinculada: ${linkedIncident.title}` : "Registrar ocorrência"}
         >
           {linkedIncident ? <BadgeAlert aria-hidden="true" size={18} /> : <TriangleAlert aria-hidden="true" size={18} />}
         </button>
       )}
+      {linkedIncident && (
+        <ShipmentIncidentDetailsPopup
+          incident={linkedIncident}
+          open={showIncidentDetails}
+          onClose={() => {
+            setShowIncidentDetails(false);
+            setConfirmingCancel(false);
+          }}
+          confirmingCancel={confirmingCancel}
+          onCancelRequest={() => setConfirmingCancel(true)}
+          onCancelDismiss={() => setConfirmingCancel(false)}
+          onCancelConfirm={() => {
+            updateIncidentStatus(linkedIncident.id, "cancelled");
+            setConfirmingCancel(false);
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+interface ShipmentIncidentDetailsPopupProps {
+  incident: Incident;
+  open: boolean;
+  onClose: () => void;
+  confirmingCancel: boolean;
+  onCancelRequest: () => void;
+  onCancelDismiss: () => void;
+  onCancelConfirm: () => void;
+}
+
+function ShipmentIncidentDetailsPopup({
+  incident,
+  open,
+  onClose,
+  confirmingCancel,
+  onCancelRequest,
+  onCancelDismiss,
+  onCancelConfirm,
+}: ShipmentIncidentDetailsPopupProps) {
+  const titleId = useId();
+  const popupRef = useRef<HTMLElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useModalFocus(open, onClose, popupRef, closeRef);
+
+  if (!open) return null;
+
+  return createPortal(
+    <div className="dialog-backdrop dialog-backdrop--center" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section ref={popupRef} className="incident-popup" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+        <header className="dialog-header">
+          <div>
+            <span className="page-eyebrow">Ocorrência do embarque</span>
+            <h2 id={titleId}>{incident.title}</h2>
+          </div>
+          <button ref={closeRef} type="button" onClick={onClose} aria-label={`Fechar ${incident.title}`}>×</button>
+        </header>
+        <div className="shipment-incident-detail" aria-label="Detalhes da ocorrência">
+          <div className="shipment-incident-detail__heading">
+            <strong>{incident.title}</strong>
+            <StatusBadge tone={incident.status === "cancelled" ? "neutral" : incident.status === "resolved" ? "success" : "warning"}>
+              {incidentStatusLabels[incident.status]}
+            </StatusBadge>
+          </div>
+          <dl>
+            <div><dt>Tipo</dt><dd>{incidentTypeLabels[incident.type]}</dd></div>
+            <div><dt>Prioridade</dt><dd>{incidentPriorityLabels[incident.priority]}</dd></div>
+            <div><dt>Descrição</dt><dd>{incident.description}</dd></div>
+          </dl>
+          <div className="incident-popup__actions">
+            {incident.status !== "cancelled" && (
+              <button className="button-secondary" type="button" onClick={onCancelRequest}>Cancelar ocorrência</button>
+            )}
+            <button className="button-primary" type="button" onClick={onClose}>Fechar detalhes</button>
+          </div>
+        </div>
+        <ConfirmDialog
+          title="Cancelar ocorrência"
+          open={confirmingCancel}
+          onCancel={onCancelDismiss}
+          onConfirm={onCancelConfirm}
+          confirmLabel="Cancelar ocorrência"
+        >
+          <p>A ocorrência continuará vinculada ao embarque, mas ficará marcada como cancelada.</p>
+        </ConfirmDialog>
+      </section>
+    </div>,
+    document.body,
   );
 }

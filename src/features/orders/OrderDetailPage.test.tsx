@@ -69,6 +69,8 @@ it("allows commercial users to confirm delivery and register an occurrence from 
   await user.click(screen.getByRole("button", { name: "Registrar" }));
   expect(shipmentRow).toHaveTextContent("Item faltante");
   expect(within(shipmentRow).queryByRole("button", { name: "Registrar ocorrência" })).not.toBeInTheDocument();
+  expect(shipmentRow).not.toHaveTextContent("Faltaram duas peças");
+  expect(screen.getByRole("dialog", { name: "Item faltante" })).toBeVisible();
   expect(screen.getByLabelText("Detalhes da ocorrência")).toHaveTextContent("Faltaram duas peças");
   await user.click(screen.getByRole("button", { name: "Fechar detalhes" }));
   await user.click(within(shipmentRow).getByRole("button", { name: /ver ocorrência vinculada: item faltante/i }));
