@@ -8,9 +8,10 @@ import { usePrototypeStore } from "../../state/PrototypeStore";
 
 interface DeliveryFormProps {
   shipment: Shipment;
+  showHeading?: boolean;
 }
 
-export function DeliveryForm({ shipment }: DeliveryFormProps) {
+export function DeliveryForm({ shipment, showHeading = true }: DeliveryFormProps) {
   const { user } = useAuth();
   const { orderTimelineEvents, recordDelivery } = usePrototypeStore();
   const [confirming, setConfirming] = useState(false);
@@ -26,7 +27,7 @@ export function DeliveryForm({ shipment }: DeliveryFormProps) {
 
   return (
     <section className="delivery-form" aria-labelledby={`delivery-${shipment.id}`}>
-      <h3 id={`delivery-${shipment.id}`}>Confirmação de entrega</h3>
+      {showHeading && <h3 id={`delivery-${shipment.id}`}>Confirmação de entrega</h3>}
       {saved && <p className="session-notice" role="status">Entrega registrada somente nesta sessão.</p>}
       {deliveryEvent && <p><strong>{deliveryEvent.title}</strong> — {deliveryEvent.detail}</p>}
       {!shipment.deliveredAt && (

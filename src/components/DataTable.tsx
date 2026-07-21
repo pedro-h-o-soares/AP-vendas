@@ -20,6 +20,7 @@ interface DataTableProps<T> {
   emptyMessage: string;
   ariaLabel?: string;
   rowAction?: RowAction<T>;
+  rowActions?: (row: T) => ReactNode;
 }
 
 export function DataTable<T>({
@@ -29,6 +30,7 @@ export function DataTable<T>({
   emptyMessage,
   ariaLabel,
   rowAction,
+  rowActions,
 }: DataTableProps<T>) {
   if (rows.length === 0) {
     return <p className="data-table__empty" role="status">{emptyMessage}</p>;
@@ -44,7 +46,7 @@ export function DataTable<T>({
                 {column.header}
               </th>
             ))}
-            {rowAction && <th scope="col" aria-label="Ações" />}
+            {(rowAction || rowActions) && <th scope="col" aria-label="Ações" />}
           </tr>
         </thead>
         <tbody>
@@ -59,11 +61,10 @@ export function DataTable<T>({
                   {column.render(row)}
                 </td>
               ))}
-              {rowAction && (
+              {(rowAction || rowActions) && (
                 <td className="data-table__action">
-                  <button type="button" onClick={() => rowAction.onClick(row)}>
-                    {rowAction.label(row)}
-                  </button>
+                  {rowAction && <button type="button" onClick={() => rowAction.onClick(row)}>{rowAction.label(row)}</button>}
+                  {rowActions?.(row)}
                 </td>
               )}
             </tr>

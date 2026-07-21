@@ -9,6 +9,7 @@ import { DeliveryForm } from "./DeliveryForm";
 interface ShipmentDeliveryActionsProps {
   order: Order;
   shipment: Shipment;
+  compact?: boolean;
 }
 
 const incidentTypeLabels: Record<IncidentType, string> = {
@@ -23,7 +24,7 @@ const incidentPriorityLabels: Record<IncidentPriority, string> = {
   high: "Alta",
 };
 
-export function ShipmentDeliveryActions({ order, shipment }: ShipmentDeliveryActionsProps) {
+export function ShipmentDeliveryActions({ order, shipment, compact = false }: ShipmentDeliveryActionsProps) {
   const { user } = useAuth();
   const { createIncident } = usePrototypeStore();
   const [showIncidentForm, setShowIncidentForm] = useState(false);
@@ -52,8 +53,8 @@ export function ShipmentDeliveryActions({ order, shipment }: ShipmentDeliveryAct
   };
 
   return (
-    <section className="shipment-delivery-actions" aria-label="Ações de entrega">
-      <DeliveryForm shipment={shipment} />
+    <section className={`shipment-delivery-actions${compact ? " shipment-delivery-actions--compact" : ""}`} aria-label="Ações de entrega">
+      <DeliveryForm shipment={shipment} showHeading={!compact} />
       {showIncidentForm ? (
         <div className="order-form">
           <FormField label="Tipo"><select value={incidentType} onChange={(event) => setIncidentType(event.target.value as IncidentType)}>{Object.entries(incidentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></FormField>

@@ -748,6 +748,37 @@ textarea:focus-visible {
   min-height: 0;
   padding: 0.5rem 0.65rem;
 }
+
+.data-table__action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.data-table__action .shipment-delivery-actions--compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.data-table__action .shipment-delivery-actions--compact .delivery-form {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.data-table__action .shipment-delivery-actions--compact button {
+  min-height: 2.75rem;
+}
+
+.data-table__action .shipment-delivery-actions--compact .order-form,
+.data-table__action .shipment-delivery-actions--compact .session-notice {
+  flex-basis: 100%;
+}
+
+.data-table__action .shipment-delivery-actions--compact .order-form {
+  grid-template-columns: 1fr;
+}
 .data-table__empty,
 .async-state { padding: 1.5rem; color: var(--color-muted); text-align: center; }
 .async-state--error { color: var(--color-danger); }

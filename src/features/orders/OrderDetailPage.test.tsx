@@ -54,11 +54,14 @@ it("allows commercial users to confirm delivery and register an occurrence from 
   const user = await renderDetail("order-brasil-flora-3824", "commercial");
 
   await user.click(screen.getByRole("tab", { name: "Carga e entrega" }));
-  await user.click(screen.getByRole("button", { name: "Confirmar entrega" }));
+  const shipmentRow = screen.getByRole("row", { name: /2026-01-24 1448/i });
+  expect(within(shipmentRow).getByRole("button", { name: "Confirmar entrega" })).toBeVisible();
+  expect(within(shipmentRow).getByRole("button", { name: "Registrar ocorrência" })).toBeVisible();
+  await user.click(within(shipmentRow).getByRole("button", { name: "Confirmar entrega" }));
   await user.click(within(screen.getByRole("alertdialog", { name: "Confirmar entrega" })).getByRole("button", { name: "Confirmar entrega" }));
   expect(screen.getByRole("tabpanel")).toHaveTextContent(/entrega registrada somente nesta sessão/i);
 
-  await user.click(screen.getByRole("button", { name: "Registrar ocorrência" }));
+  await user.click(within(shipmentRow).getByRole("button", { name: "Registrar ocorrência" }));
   await user.selectOptions(screen.getByLabelText("Tipo"), "missing-item");
   await user.type(screen.getByLabelText("Descrição"), "Faltaram duas peças");
   await user.click(screen.getByRole("button", { name: "Registrar" }));
