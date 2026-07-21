@@ -73,6 +73,15 @@ export function OrderDetailPage() {
     { key: "route", header: "Rota", render: (s) => s.route ?? "—" },
     { key: "forecast", header: "Previsão", render: (s) => s.expectedDeliveryAt ?? "—" },
     { key: "delivery", header: "Entrega", render: (s) => s.deliveredAt ?? "Pendente" },
+    {
+      key: "incident",
+      header: "Ocorrência",
+      render: (s) => {
+        const incident = incidents.find((candidate) => candidate.shipmentId === s.id);
+        if (!incident) return "—";
+        return incident.status === "cancelled" ? `${incident.title} (cancelada)` : incident.title;
+      },
+    },
   ];
   const installmentStatusLabels: Record<FinancialStatus, string> = {
     receivable: "A receber", payable: "A pagar", "due-soon": "Próximo do vencimento", overdue: "Atrasado",

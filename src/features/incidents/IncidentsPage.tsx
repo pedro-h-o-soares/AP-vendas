@@ -10,7 +10,7 @@ import { IncidentForm } from "./IncidentForm";
 
 const typeLabels = { "missing-item": "Item faltante", "wrong-product": "Produto incorreto", other: "Outra divergência" };
 const priorityLabels = { low: "Baixa", medium: "Média", high: "Alta" };
-const statusLabels = { open: "Aberta", "in-progress": "Em tratamento", "awaiting-supplier": "Aguardando fornecedor", resolved: "Resolvida" };
+const statusLabels = { open: "Aberta", "in-progress": "Em tratamento", "awaiting-supplier": "Aguardando fornecedor", resolved: "Resolvida", cancelled: "Cancelada" };
 
 export function IncidentsPage() {
   const { incidents, orders } = usePrototypeStore();
@@ -25,7 +25,7 @@ export function IncidentsPage() {
     { key: "client", header: "Cliente", render: (incident) => incident.clientName },
     { key: "supplier", header: "Fornecedor", render: (incident) => incident.supplierName },
     { key: "owner", header: "Responsável", render: (incident) => incident.owner ?? "Não atribuído" },
-    { key: "status", header: "Status", render: (incident) => <StatusBadge tone={incident.status === "resolved" ? "success" : incident.priority === "high" ? "danger" : "warning"}>{statusLabels[incident.status]}</StatusBadge> },
+    { key: "status", header: "Status", render: (incident) => <StatusBadge tone={incident.status === "resolved" ? "success" : incident.status === "cancelled" ? "neutral" : incident.priority === "high" ? "danger" : "warning"}>{statusLabels[incident.status]}</StatusBadge> },
   ];
 
   return (

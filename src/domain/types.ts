@@ -34,7 +34,8 @@ export type IncidentStatus =
   | "open"
   | "in-progress"
   | "awaiting-supplier"
-  | "resolved";
+  | "resolved"
+  | "cancelled";
 
 export type PostalStatus =
   | "prepared"

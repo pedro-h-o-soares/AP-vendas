@@ -67,7 +67,14 @@ it("allows commercial users to confirm delivery and register an occurrence from 
   await user.selectOptions(screen.getByLabelText("Tipo"), "missing-item");
   await user.type(screen.getByLabelText("Descrição"), "Faltaram duas peças");
   await user.click(screen.getByRole("button", { name: "Registrar" }));
-  expect(screen.getByRole("tabpanel")).toHaveTextContent("Item faltante");
+  expect(shipmentRow).toHaveTextContent("Item faltante");
+  expect(within(shipmentRow).queryByRole("button", { name: "Registrar ocorrência" })).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Detalhes da ocorrência")).toHaveTextContent("Faltaram duas peças");
+  await user.click(screen.getByRole("button", { name: "Fechar detalhes" }));
+  await user.click(within(shipmentRow).getByRole("button", { name: /ver ocorrência vinculada: item faltante/i }));
+  await user.click(screen.getByRole("button", { name: "Cancelar ocorrência" }));
+  await user.click(within(screen.getByRole("alertdialog", { name: "Cancelar ocorrência" })).getByRole("button", { name: "Cancelar ocorrência" }));
+  expect(shipmentRow).toHaveTextContent("Item faltante (cancelada)");
 });
 
 it("keeps shipment actions read-only for finance users", async () => {

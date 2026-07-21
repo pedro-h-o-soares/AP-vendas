@@ -160,9 +160,13 @@ const replaceOrder = (orders: Order[], changed: Order): Order[] =>
 const createPostalCheckReservations = (checks: Check[]): Map<string, string> =>
   new Map(checks.flatMap((check) => check.postalShipmentId ? [[check.id, check.postalShipmentId]] : []));
 
+const createShipmentIncidentReservations = (incidents: Incident[]): Map<string, Incident> =>
+  new Map(incidents.flatMap((incident) => incident.shipmentId ? [[incident.shipmentId, clone(incident)]] : []));
+
 export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   const sequence = useRef(0);
   const postalCheckReservations = useRef(createPostalCheckReservations(sampleChecks));
+  const shipmentIncidentReservations = useRef(createShipmentIncidentReservations(sampleIncidents));
   const deliverySnapshots = useRef(new Map<string, Shipment>());
   const [demo, setDemo] = useState<DemoState>(createDemoState);
 
@@ -335,6 +339,13 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   };
 
   const createIncident = (input: IncidentInput): Incident => {
+    if (input.shipmentId) {
+      const reservedIncident = shipmentIncidentReservations.current.get(input.shipmentId);
+      const existingIncident = reservedIncident
+        ? demo.incidents.find(({ id }) => id === reservedIncident.id) ?? reservedIncident
+        : undefined;
+      if (existingIncident) return clone(existingIncident);
+    }
     const openedAt = toLocalISODate();
     const incident: Incident = {
       ...input,
@@ -358,6 +369,9 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
       title: "Ocorrência registrada",
       detail: incident.title,
     };
+    if (input.shipmentId) {
+      shipmentIncidentReservations.current.set(input.shipmentId, clone(incident));
+    }
     setDemo((current) => ({
       ...current,
       incidents: [...current.incidents, incident],
@@ -449,6 +463,9 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
     const date = toLocalISODate();
     const event = { id: nextId("incident-event"), date, description: `Status alterado para ${status}` };
     changed.timeline = [...current.timeline, event];
+    if (changed.shipmentId) {
+      shipmentIncidentReservations.current.set(changed.shipmentId, clone(changed));
+    }
     setDemo((currentState) => ({
       ...currentState,
       incidents: currentState.incidents.map((i) => i.id === incidentId ? changed : i),
@@ -468,6 +485,9 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
         { id: nextId("incident-event"), date, description: "Fornecedor acionado" },
       ],
     };
+    if (incident.shipmentId) {
+      shipmentIncidentReservations.current.set(incident.shipmentId, clone(incident));
+    }
     const orderEvent: OrderTimelineEvent = {
       id: nextId("order-event"),
       orderId: incident.orderId,

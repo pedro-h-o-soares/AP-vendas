@@ -12,6 +12,7 @@ const statusOptions: { value: IncidentStatus; label: string }[] = [
   { value: "in-progress", label: "Em tratamento" },
   { value: "awaiting-supplier", label: "Aguardando fornecedor" },
   { value: "resolved", label: "Resolvida" },
+  { value: "cancelled", label: "Cancelada" },
 ];
 
 interface IncidentDrawerProps {
@@ -32,7 +33,7 @@ export function IncidentDrawer({ incident, open, onClose }: IncidentDrawerProps)
       <div className="incident-detail">
         <div className="incident-detail__heading">
           <StatusBadge tone={incident.priority === "high" ? "danger" : incident.priority === "medium" ? "warning" : "info"}>{priorityLabels[incident.priority]}</StatusBadge>
-          <StatusBadge tone={incident.status === "resolved" ? "success" : "warning"}>{statusOptions.find((s) => s.value === incident.status)?.label ?? incident.status}</StatusBadge>
+          <StatusBadge tone={incident.status === "resolved" ? "success" : incident.status === "cancelled" ? "neutral" : "warning"}>{statusOptions.find((s) => s.value === incident.status)?.label ?? incident.status}</StatusBadge>
         </div>
         <dl className="incident-detail__facts">
           <div><dt>Tipo</dt><dd>{typeLabels[incident.type]}</dd></div>

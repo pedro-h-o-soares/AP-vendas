@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { TriangleAlert } from "lucide-react";
+import { BadgeAlert, TriangleAlert } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { can } from "../../auth/permissions";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { FormField } from "../../components/FormField";
-import type { IncidentPriority, IncidentType, Order, Shipment } from "../../domain/types";
+import { StatusBadge } from "../../components/StatusBadge";
+import type { IncidentPriority, IncidentStatus, IncidentType, Order, Shipment } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
 import { DeliveryForm } from "./DeliveryForm";
 
@@ -25,19 +27,30 @@ const incidentPriorityLabels: Record<IncidentPriority, string> = {
   high: "Alta",
 };
 
+const incidentStatusLabels: Record<IncidentStatus, string> = {
+  open: "Aberta",
+  "in-progress": "Em tratamento",
+  "awaiting-supplier": "Aguardando fornecedor",
+  resolved: "Resolvida",
+  cancelled: "Cancelada",
+};
+
 export function ShipmentDeliveryActions({ order, shipment, compact = false }: ShipmentDeliveryActionsProps) {
   const { user } = useAuth();
-  const { createIncident } = usePrototypeStore();
+  const { createIncident, incidents, updateIncidentStatus } = usePrototypeStore();
   const [showIncidentForm, setShowIncidentForm] = useState(false);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [incidentType, setIncidentType] = useState<IncidentType>("other");
   const [incidentPriority, setIncidentPriority] = useState<IncidentPriority>("medium");
   const [incidentDescription, setIncidentDescription] = useState("");
   const allowed = Boolean(user && can(user.role, "edit-logistics"));
+  const linkedIncident = incidents.find((incident) => incident.shipmentId === shipment.id);
 
   if (!allowed) return null;
 
   const submitIncident = () => {
-    createIncident({
+    if (linkedIncident) return;
+    const incident = createIncident({
       orderId: order.id,
       shipmentId: shipment.id,
       clientName: order.clientName,
@@ -50,13 +63,43 @@ export function ShipmentDeliveryActions({ order, shipment, compact = false }: Sh
     setIncidentType("other");
     setIncidentPriority("medium");
     setIncidentDescription("");
-    setShowIncidentForm(false);
+    setShowIncidentForm(Boolean(incident));
   };
 
   return (
     <section className={`shipment-delivery-actions${compact ? " shipment-delivery-actions--compact" : ""}`} aria-label="Ações de entrega">
       <DeliveryForm shipment={shipment} showHeading={!compact} compact={compact} />
-      {showIncidentForm ? (
+      {showIncidentForm && linkedIncident ? (
+        <div className="shipment-incident-detail" aria-label="Detalhes da ocorrência">
+          <div className="shipment-incident-detail__heading">
+            <strong>{linkedIncident.title}</strong>
+            <StatusBadge tone={linkedIncident.status === "cancelled" ? "neutral" : linkedIncident.status === "resolved" ? "success" : "warning"}>
+              {incidentStatusLabels[linkedIncident.status]}
+            </StatusBadge>
+          </div>
+          <dl>
+            <div><dt>Tipo</dt><dd>{incidentTypeLabels[linkedIncident.type]}</dd></div>
+            <div><dt>Prioridade</dt><dd>{incidentPriorityLabels[linkedIncident.priority]}</dd></div>
+            <div><dt>Descrição</dt><dd>{linkedIncident.description}</dd></div>
+          </dl>
+          {linkedIncident.status !== "cancelled" && (
+            <button className="button-secondary" type="button" onClick={() => setConfirmingCancel(true)}>Cancelar ocorrência</button>
+          )}
+          <button className="button-secondary" type="button" onClick={() => setShowIncidentForm(false)}>Fechar detalhes</button>
+          <ConfirmDialog
+            title="Cancelar ocorrência"
+            open={confirmingCancel}
+            onCancel={() => setConfirmingCancel(false)}
+            onConfirm={() => {
+              updateIncidentStatus(linkedIncident.id, "cancelled");
+              setConfirmingCancel(false);
+            }}
+            confirmLabel="Cancelar ocorrência"
+          >
+            <p>A ocorrência continuará vinculada ao embarque, mas ficará marcada como cancelada.</p>
+          </ConfirmDialog>
+        </div>
+      ) : showIncidentForm ? (
         <div className="order-form">
           <FormField label="Tipo"><select value={incidentType} onChange={(event) => setIncidentType(event.target.value as IncidentType)}>{Object.entries(incidentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></FormField>
           <FormField label="Prioridade"><select value={incidentPriority} onChange={(event) => setIncidentPriority(event.target.value as IncidentPriority)}>{Object.entries(incidentPriorityLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></FormField>
@@ -66,12 +109,12 @@ export function ShipmentDeliveryActions({ order, shipment, compact = false }: Sh
       ) : (
         <button
           type="button"
-          className="action-icon action-icon--warning"
+          className={`action-icon action-icon--warning${linkedIncident ? " action-icon--linked" : ""}`}
           onClick={() => setShowIncidentForm(true)}
-          aria-label="Registrar ocorrência"
-          title="Registrar ocorrência"
+          aria-label={linkedIncident ? `Ver ocorrência vinculada: ${linkedIncident.title}` : "Registrar ocorrência"}
+          title={linkedIncident ? `Ocorrência vinculada: ${linkedIncident.title}` : "Registrar ocorrência"}
         >
-          <TriangleAlert aria-hidden="true" size={18} />
+          {linkedIncident ? <BadgeAlert aria-hidden="true" size={18} /> : <TriangleAlert aria-hidden="true" size={18} />}
         </button>
       )}
     </section>

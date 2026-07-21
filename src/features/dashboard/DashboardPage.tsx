@@ -78,7 +78,7 @@ export function DashboardPage() {
   ];
 
   const openIncidents = incidents.filter(
-    (incident) => incident.status !== "resolved" && filteredOrderIds.has(incident.orderId),
+    (incident) => !["resolved", "cancelled"].includes(incident.status) && filteredOrderIds.has(incident.orderId),
   );
   const awaiting = filteredOrders.filter((order) => order.status.startsWith("awaiting"));
   const inTransit = filteredOrders.filter((order) => order.status === "in-transit" || order.status === "shipment-informed");

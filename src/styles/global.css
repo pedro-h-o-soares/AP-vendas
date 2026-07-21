@@ -195,6 +195,11 @@ textarea:focus-visible {
   background: rgba(245, 159, 58, 0.16);
 }
 
+.action-icon--linked {
+  color: #b52e47;
+  background: rgba(220, 76, 100, 0.13);
+}
+
 .action-icon--success {
   color: #257862;
   background: rgba(69, 166, 141, 0.14);
@@ -827,6 +832,42 @@ textarea:focus-visible {
 
 .data-table__action .shipment-delivery-actions--compact .order-form {
   grid-template-columns: 1fr;
+}
+
+.shipment-incident-detail {
+  display: grid;
+  flex-basis: 100%;
+  gap: 0.65rem;
+  min-width: min(26rem, 100%);
+  padding: 0.8rem;
+  border: 1px solid rgba(111, 88, 217, 0.1);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.shipment-incident-detail__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.shipment-incident-detail dl {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.shipment-incident-detail dt {
+  color: var(--color-muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.shipment-incident-detail dd {
+  margin: 0.12rem 0 0;
 }
 .data-table__empty,
 .async-state { padding: 1.5rem; color: var(--color-muted); text-align: center; }

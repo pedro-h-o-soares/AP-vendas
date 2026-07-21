@@ -158,6 +158,38 @@ describe("PrototypeStore", () => {
     }));
   });
 
+  it("keeps only one incident linked to each shipment", () => {
+    const { result } = renderHook(() => usePrototypeStore(), { wrapper });
+    const order = result.current.orders.find(({ shipments }) => shipments?.length)!;
+    const shipmentId = order.shipments![0]!.id;
+    let incidentId = "";
+
+    act(() => {
+      const first = result.current.createIncident({
+        orderId: order.id,
+        shipmentId,
+        clientName: order.clientName,
+        supplierName: order.supplierName,
+        title: "Item faltante",
+        description: "Faltaram duas peças",
+        type: "missing-item",
+      });
+      incidentId = first.id;
+      const second = result.current.createIncident({
+        orderId: order.id,
+        shipmentId,
+        clientName: order.clientName,
+        supplierName: order.supplierName,
+        title: "Produto incorreto",
+        description: "Produto recebido não corresponde ao pedido",
+        type: "wrong-product",
+      });
+      expect(second.id).toBe(incidentId);
+    });
+
+    expect(result.current.incidents.filter((incident) => incident.shipmentId === shipmentId)).toHaveLength(1);
+  });
+
   it("records payments and postal shipments in memory", () => {
     const { result } = renderHook(() => usePrototypeStore(), { wrapper });
     const orderId = result.current.orders[0].id;
