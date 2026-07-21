@@ -95,6 +95,21 @@ describe("PrototypeStore", () => {
     }));
   });
 
+  it("does not duplicate the delivery event when a shipment is confirmed twice", () => {
+    const { result } = renderHook(() => usePrototypeStore(), { wrapper });
+    const order = result.current.orders.find(({ shipments }) => shipments?.length)!;
+    const shipmentId = order.shipments![0]!.id;
+
+    act(() => {
+      result.current.recordDelivery(shipmentId, "2026-07-16");
+      result.current.recordDelivery(shipmentId, "2026-07-16");
+    });
+
+    expect(result.current.orderTimelineEvents.filter((event) =>
+      event.orderId === order.id && event.title === "Entrega confirmada",
+    )).toHaveLength(1);
+  });
+
   it("links incident timelines without removing the shipment phase evidence", () => {
     const { result } = renderHook(() => usePrototypeStore(), { wrapper });
     const order = result.current.orders.find(({ shipments }) => shipments?.length)!;

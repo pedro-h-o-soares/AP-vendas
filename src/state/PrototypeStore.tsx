@@ -163,6 +163,7 @@ const createPostalCheckReservations = (checks: Check[]): Map<string, string> =>
 export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   const sequence = useRef(0);
   const postalCheckReservations = useRef(createPostalCheckReservations(sampleChecks));
+  const deliverySnapshots = useRef(new Map<string, Shipment>());
   const [demo, setDemo] = useState<DemoState>(createDemoState);
 
   const findOrder = (orderId: string): Order => {
@@ -367,20 +368,19 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   };
 
   const recordDelivery = (shipmentId: string, deliveredAt: ISODate): Shipment => {
+    const alreadyRecorded = deliverySnapshots.current.get(shipmentId);
+    if (alreadyRecorded) return clone(alreadyRecorded);
     const order = demo.orders.find(({ shipments }) => shipments?.some((s) => s.id === shipmentId));
     const target = order?.shipments?.find((s) => s.id === shipmentId);
     if (!order || !target) throw new Error(`Shipment not found: ${shipmentId}`);
+    if (target.deliveredAt) return clone(target);
     const shipment: Shipment = {
       ...target,
       deliveredAt,
       unloadingConfirmed: true,
       materialCheck: "matched",
     };
-    const changedOrder: Order = {
-      ...order,
-      shipments: order.shipments!.map((s) => s.id === shipmentId ? shipment : s),
-      status: "delivered",
-    };
+    deliverySnapshots.current.set(shipmentId, shipment);
     const event: OrderTimelineEvent = {
       id: nextId("order-event"),
       orderId: order.id,
@@ -390,7 +390,9 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
     };
     setDemo((current) => ({
       ...current,
-      orders: replaceOrder(current.orders, changedOrder),
+      orders: current.orders.map((currentOrder) => currentOrder.id === order.id
+        ? { ...currentOrder, shipments: currentOrder.shipments!.map((s) => s.id === shipmentId ? shipment : s), status: "delivered" }
+        : currentOrder),
       orderTimelineEvents: [...current.orderTimelineEvents, event],
     }));
     return clone(shipment);
@@ -631,6 +633,7 @@ export function PrototypeStoreProvider({ children }: PropsWithChildren) {
   const resetDemo = () => {
     sequence.current = 0;
     postalCheckReservations.current = createPostalCheckReservations(sampleChecks);
+    deliverySnapshots.current.clear();
     setDemo(createDemoState());
   };
 
