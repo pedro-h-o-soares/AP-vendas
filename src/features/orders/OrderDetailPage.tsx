@@ -11,6 +11,7 @@ import { usePrototypeStore } from "../../state/PrototypeStore";
 import { toLocalISODate } from "../../domain/localDate";
 import { OrderTimeline } from "./OrderTimeline";
 import { orderStatusLabels, orderStatusTone } from "./orderStatus";
+import { ShipmentDeliveryActions } from "../logistics/ShipmentDeliveryActions";
 
 const tabs = ["Resumo", "Itens e valores", "Carga e entrega", "Financeiro", "Histórico"] as const;
 type Tab = typeof tabs[number];
@@ -217,6 +218,7 @@ export function OrderDetailPage() {
       case "Carga e entrega":
         return <div className="detail-grid detail-grid--full"><article><h3>Embarques ({order.shipments?.length ?? 0})</h3>
           <DataTable columns={shipmentColumns} rows={order.shipments ?? []} getRowId={(s) => s.id} emptyMessage="Nenhum embarque informado." rowAction={canEdit ? { label: () => "Editar", onClick: (s) => startEditExistingShipment(s) } : undefined} />
+          {(order.shipments ?? []).map((shipment) => <section key={shipment.id} className="shipment-actions"><h4>Embarque {shipment.invoiceNumber ?? shipment.id}</h4><ShipmentDeliveryActions order={order} shipment={shipment} /></section>)}
           {editing ? <div className="order-form">
             <FormField label="Data de saída"><input type="date" value={shipShippedAt} onChange={(e) => setShipShippedAt(e.target.value)} /></FormField>
             <FormField label="Nota fiscal"><input value={shipInvoice} onChange={(e) => setShipInvoice(e.target.value)} /></FormField>

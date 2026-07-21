@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState, type ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -48,6 +48,30 @@ it("keeps finance users read-only while preserving every detail tab", async () =
   expect(screen.getAllByRole("tab")).toHaveLength(5);
   expect(screen.queryByRole("button", { name: /marcar em trânsito/i })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /marcar como entregue/i })).not.toBeInTheDocument();
+});
+
+it("allows commercial users to confirm delivery and register an occurrence from the shipment tab", async () => {
+  const user = await renderDetail("order-brasil-flora-3824", "commercial");
+
+  await user.click(screen.getByRole("tab", { name: "Carga e entrega" }));
+  await user.click(screen.getByRole("button", { name: "Confirmar entrega" }));
+  await user.click(within(screen.getByRole("alertdialog", { name: "Confirmar entrega" })).getByRole("button", { name: "Confirmar entrega" }));
+  expect(screen.getByRole("tabpanel")).toHaveTextContent(/entrega registrada somente nesta sessão/i);
+
+  await user.click(screen.getByRole("button", { name: "Registrar ocorrência" }));
+  await user.selectOptions(screen.getByLabelText("Tipo"), "missing-item");
+  await user.type(screen.getByLabelText("Descrição"), "Faltaram duas peças");
+  await user.click(screen.getByRole("button", { name: "Registrar" }));
+  expect(screen.getByRole("tabpanel")).toHaveTextContent("Item faltante");
+});
+
+it("keeps shipment actions read-only for finance users", async () => {
+  const user = await renderDetail("order-brasil-flora-3824", "finance");
+
+  await user.click(screen.getByRole("tab", { name: "Carga e entrega" }));
+  expect(screen.getByRole("tabpanel")).toHaveTextContent("Embarques");
+  expect(screen.queryByRole("button", { name: "Confirmar entrega" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Registrar ocorrência" })).not.toBeInTheDocument();
 });
 
 it("shows translated order status in the summary", async () => {
