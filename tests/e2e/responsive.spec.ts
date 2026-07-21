@@ -138,13 +138,13 @@ test.describe("responsive shell", () => {
       await expectNoHiddenOverflowMask(page);
       await expectNoHorizontalOverflow(page);
 
-      await page.getByRole("button", { name: "Novo orçamento" }).click();
-      const drawer = page.getByRole("dialog", { name: "Novo orçamento" });
+      await page.getByRole("button", { name: "Novo pedido" }).click();
+      const drawer = page.getByRole("dialog", { name: "Novo pedido" });
       await expectInsideViewport(page, drawer);
       await expectDrawerControlsReachable(drawer);
       await expectNoHiddenOverflowMask(page);
       await expectNoHorizontalOverflow(page);
-      const close = drawer.getByRole("button", { name: "Fechar Novo orçamento" });
+      const close = drawer.getByRole("button", { name: "Fechar Novo pedido" });
       await expectTouchTarget(close);
       await close.click();
 
@@ -188,7 +188,7 @@ test.describe("responsive shell", () => {
     await expect(mobileTable.locator("tbody tr").first()).toHaveCSS("display", "block");
     await expect(mobileTable.locator("tbody td").first()).toHaveCSS("display", "grid");
     const labelledCells = mobileTable.locator("tbody tr").first().locator("td[data-label]");
-    await expect(labelledCells).toHaveCount(7);
+    await expect(labelledCells).toHaveCount(6);
     for (const cell of await labelledCells.all()) {
       await expect(cell).toHaveAttribute("data-label", /.+/);
       expect(await cell.evaluate((element) => getComputedStyle(element, "::before").content)).not.toBe("none");
@@ -205,18 +205,25 @@ test.describe("responsive shell", () => {
     await expectNoHiddenOverflowMask(page);
     await expectNoHorizontalOverflow(page);
 
-    await page.getByRole("button", { name: "Novo orçamento" }).click();
-    const drawer = page.getByRole("dialog", { name: "Novo orçamento" });
+    await page.getByRole("button", { name: "Novo pedido" }).click();
+    const drawer = page.getByRole("dialog", { name: "Novo pedido" });
     await expectInsideViewport(page, drawer);
     await expectDrawerControlsReachable(drawer);
     await expectNoHiddenOverflowMask(page);
     await expectNoHorizontalOverflow(page);
-    const close = drawer.getByRole("button", { name: "Fechar Novo orçamento" });
+    const close = drawer.getByRole("button", { name: "Fechar Novo pedido" });
     await expectTouchTarget(close);
     await close.click();
 
     await page.getByRole("button", { name: "Ver pedido" }).first().click();
     await expectTouchTarget(page.getByRole("button", { name: /Pedidos/ }));
+    await page.getByRole("tab", { name: "Carga e entrega" }).click();
+    const confirmDelivery = page.getByRole("button", { name: "Confirmar entrega" });
+    const registerIncident = page.getByRole("button", { name: "Registrar ocorrência" });
+    await expectTouchTarget(confirmDelivery);
+    await expectTouchTarget(registerIncident);
+    await expectInsideViewport(page, confirmDelivery);
+    await expectInsideViewport(page, registerIncident);
     await expectNoHorizontalOverflow(page);
     await page.screenshot({ fullPage: true, path: testInfo.outputPath("mobile.png") });
   });

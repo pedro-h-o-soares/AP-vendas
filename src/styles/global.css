@@ -154,7 +154,7 @@ textarea:focus-visible {
 .wizard-actions button,
 .wizard-fields > button,
 .back-link {
-  min-height: 2.65rem;
+  min-height: 2.75rem;
   padding: 0.65rem 0.9rem;
   cursor: pointer;
   border: 0;
