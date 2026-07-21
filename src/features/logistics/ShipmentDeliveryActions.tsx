@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TriangleAlert } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { can } from "../../auth/permissions";
 import { FormField } from "../../components/FormField";
@@ -62,7 +63,17 @@ export function ShipmentDeliveryActions({ order, shipment, compact = false }: Sh
           <FormField label="Descrição"><textarea value={incidentDescription} onChange={(event) => setIncidentDescription(event.target.value)} /></FormField>
           <div className="order-form__submit"><button className="button-primary" type="button" onClick={submitIncident}>Registrar</button><button className="button-secondary" type="button" onClick={() => setShowIncidentForm(false)}>Cancelar</button></div>
         </div>
-      ) : <button type="button" className="button-secondary" onClick={() => setShowIncidentForm(true)}>Registrar ocorrência</button>}
+      ) : (
+        <button
+          type="button"
+          className="action-icon action-icon--warning"
+          onClick={() => setShowIncidentForm(true)}
+          aria-label="Registrar ocorrência"
+          title="Registrar ocorrência"
+        >
+          <TriangleAlert aria-hidden="true" size={18} />
+        </button>
+      )}
     </section>
   );
 }

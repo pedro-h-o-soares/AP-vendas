@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Pencil } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { can } from "../../auth/permissions";
@@ -218,7 +219,22 @@ export function OrderDetailPage() {
         return <><DataTable columns={itemColumns} rows={order.items} getRowId={(item) => item.id} emptyMessage="Nenhum item registrado" /><p className="detail-total"><strong>Valor líquido:</strong> {order.values?.net.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) ?? "—"}</p>{canEdit && <div className="order-form__submit"><button type="button" className="button-secondary" onClick={startEditItens}>Editar itens</button></div>}</>;
       case "Carga e entrega":
         return <div className="detail-grid detail-grid--full"><article><h3>Embarques ({order.shipments?.length ?? 0})</h3>
-          <DataTable columns={shipmentColumns} rows={order.shipments ?? []} getRowId={(s) => s.id} emptyMessage="Nenhum embarque informado." rowActions={canEdit || canManageDelivery ? (shipment) => <>{canEdit && <button type="button" onClick={() => startEditExistingShipment(shipment)}>Editar</button>}{canManageDelivery && <ShipmentDeliveryActions order={order} shipment={shipment} compact />}</> : undefined} />
+          <DataTable
+            columns={shipmentColumns}
+            rows={order.shipments ?? []}
+            getRowId={(s) => s.id}
+            emptyMessage="Nenhum embarque informado."
+            rowActions={canEdit || canManageDelivery ? (shipment) => (
+              <>
+                {canEdit && (
+                  <button className="action-icon" type="button" onClick={() => startEditExistingShipment(shipment)} aria-label="Editar embarque" title="Editar embarque">
+                    <Pencil aria-hidden="true" size={18} />
+                  </button>
+                )}
+                {canManageDelivery && <ShipmentDeliveryActions order={order} shipment={shipment} compact />}
+              </>
+            ) : undefined}
+          />
           {editing ? <div className="order-form">
             <FormField label="Data de saída"><input type="date" value={shipShippedAt} onChange={(e) => setShipShippedAt(e.target.value)} /></FormField>
             <FormField label="Nota fiscal"><input value={shipInvoice} onChange={(e) => setShipInvoice(e.target.value)} /></FormField>

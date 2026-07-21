@@ -168,6 +168,33 @@ textarea:focus-visible {
   background: var(--color-primary);
 }
 
+.action-icon {
+  display: inline-flex;
+  width: 2.55rem;
+  min-width: 2.55rem;
+  height: 2.55rem;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  border: 0;
+  border-radius: 0.75rem;
+  color: var(--color-primary);
+  background: rgba(111, 88, 217, 0.1);
+  font-weight: 750;
+}
+
+.action-icon--primary {
+  color: white;
+  background: var(--color-primary);
+}
+
+.action-icon--warning {
+  color: #a45d0a;
+  background: rgba(245, 159, 58, 0.16);
+}
+
 .orders-table-panel,
 .order-tab-panel {
   min-width: 0;
@@ -755,6 +782,14 @@ textarea:focus-visible {
   gap: 0.45rem;
 }
 
+.data-table__action .action-icon {
+  width: 2.55rem;
+  min-width: 2.55rem;
+  height: 2.55rem;
+  min-height: 2.55rem;
+  padding: 0;
+}
+
 .data-table__action .shipment-delivery-actions--compact {
   display: flex;
   flex-wrap: wrap;
@@ -769,6 +804,10 @@ textarea:focus-visible {
 
 .data-table__action .shipment-delivery-actions--compact button {
   min-height: 2.75rem;
+}
+
+.data-table__action .shipment-delivery-actions--compact .action-icon {
+  min-height: 2.55rem;
 }
 
 .data-table__action .shipment-delivery-actions--compact .order-form,
@@ -1524,9 +1563,13 @@ textarea:focus-visible {
   .data-table td { display: grid; grid-template-columns: minmax(6rem, 0.7fr) 1fr; gap: 0.6rem; padding: 0.55rem; border: 0; text-align: left; }
   .data-table th[scope="row"] { display: block; padding: 0.55rem; border: 0; color: var(--color-ink); font-size: 0.78rem; letter-spacing: 0; text-transform: none; }
   .data-table td::before { color: var(--color-muted); content: attr(data-label); font-size: 0.65rem; font-weight: 750; text-transform: uppercase; }
-  .data-table__action { display: block !important; }
+  .data-table__action { display: flex !important; }
   .data-table__action::before { content: none !important; }
   .data-table__action button { width: 100%; }
+  .data-table__action .action-icon {
+    width: 2.75rem;
+    min-width: 2.75rem;
+  }
 
   .status-chart__layout { align-items: flex-start; flex-direction: column; }
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PackageCheck } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { can } from "../../auth/permissions";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
@@ -31,8 +32,14 @@ export function DeliveryForm({ shipment, showHeading = true }: DeliveryFormProps
       {saved && <p className="session-notice" role="status">Entrega registrada somente nesta sessão.</p>}
       {deliveryEvent && <p><strong>{deliveryEvent.title}</strong> — {deliveryEvent.detail}</p>}
       {!shipment.deliveredAt && (
-        <button className="button-primary" type="button" onClick={() => setConfirming(true)}>
-          Confirmar entrega
+        <button
+          className="action-icon action-icon--primary"
+          type="button"
+          onClick={() => setConfirming(true)}
+          aria-label="Confirmar entrega"
+          title="Confirmar entrega"
+        >
+          <PackageCheck aria-hidden="true" size={18} />
         </button>
       )}
       {shipment.deliveredAt && !deliveryEvent && <p>Entrega registrada em {shipment.deliveredAt}.</p>}
