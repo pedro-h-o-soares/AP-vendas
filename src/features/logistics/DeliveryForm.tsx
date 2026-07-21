@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PackageCheck } from "lucide-react";
+import { CheckCircle2, PackageCheck } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { can } from "../../auth/permissions";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
@@ -10,9 +10,10 @@ import { usePrototypeStore } from "../../state/PrototypeStore";
 interface DeliveryFormProps {
   shipment: Shipment;
   showHeading?: boolean;
+  compact?: boolean;
 }
 
-export function DeliveryForm({ shipment, showHeading = true }: DeliveryFormProps) {
+export function DeliveryForm({ shipment, showHeading = true, compact = false }: DeliveryFormProps) {
   const { user } = useAuth();
   const { orderTimelineEvents, recordDelivery } = usePrototypeStore();
   const [confirming, setConfirming] = useState(false);
@@ -21,9 +22,51 @@ export function DeliveryForm({ shipment, showHeading = true }: DeliveryFormProps
   const deliveryEvent = [...orderTimelineEvents].reverse().find(
     ({ orderId, title }) => orderId === shipment.orderId && title === "Entrega confirmada",
   );
+  const confirmed = Boolean(saved || shipment.deliveredAt || deliveryEvent);
 
   if (!allowed) {
     return <p className="permission-note">Perfil sem permissão para alterar a entrega.</p>;
+  }
+
+  if (compact) {
+    return (
+      <section className="delivery-form delivery-form--compact" aria-label="Confirmação de entrega">
+        {confirmed ? (
+          <button
+            className="action-icon action-icon--success"
+            type="button"
+            aria-label="Entrega confirmada"
+            title="Entrega confirmada"
+            disabled
+          >
+            <CheckCircle2 aria-hidden="true" size={18} />
+          </button>
+        ) : (
+          <button
+            className="action-icon action-icon--primary"
+            type="button"
+            onClick={() => setConfirming(true)}
+            aria-label="Confirmar entrega"
+            title="Confirmar entrega"
+          >
+            <PackageCheck aria-hidden="true" size={18} />
+          </button>
+        )}
+        <ConfirmDialog
+          title="Confirmar entrega"
+          open={confirming}
+          onCancel={() => setConfirming(false)}
+          onConfirm={() => {
+            recordDelivery(shipment.id, toLocalISODate());
+            setConfirming(false);
+            setSaved(true);
+          }}
+          confirmLabel="Confirmar entrega"
+        >
+          <p>O desembarque e a conferência do material serão registrados somente nesta sessão.</p>
+        </ConfirmDialog>
+      </section>
+    );
   }
 
   return (

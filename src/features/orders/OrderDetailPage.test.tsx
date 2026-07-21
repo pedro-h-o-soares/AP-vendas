@@ -59,7 +59,9 @@ it("allows commercial users to confirm delivery and register an occurrence from 
   expect(within(shipmentRow).getByRole("button", { name: "Registrar ocorrência" })).toBeVisible();
   await user.click(within(shipmentRow).getByRole("button", { name: "Confirmar entrega" }));
   await user.click(within(screen.getByRole("alertdialog", { name: "Confirmar entrega" })).getByRole("button", { name: "Confirmar entrega" }));
-  expect(screen.getByRole("tabpanel")).toHaveTextContent(/entrega registrada somente nesta sessão/i);
+  expect(within(shipmentRow).getByRole("button", { name: "Entrega confirmada" })).toBeDisabled();
+  expect(shipmentRow).not.toHaveTextContent(/entrega registrada somente nesta sessão/i);
+  expect(shipmentRow).not.toHaveTextContent(/entrega confirmada/i);
 
   await user.click(within(shipmentRow).getByRole("button", { name: "Registrar ocorrência" }));
   await user.selectOptions(screen.getByLabelText("Tipo"), "missing-item");

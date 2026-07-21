@@ -55,7 +55,7 @@ export function ShipmentDeliveryActions({ order, shipment, compact = false }: Sh
 
   return (
     <section className={`shipment-delivery-actions${compact ? " shipment-delivery-actions--compact" : ""}`} aria-label="Ações de entrega">
-      <DeliveryForm shipment={shipment} showHeading={!compact} />
+      <DeliveryForm shipment={shipment} showHeading={!compact} compact={compact} />
       {showIncidentForm ? (
         <div className="order-form">
           <FormField label="Tipo"><select value={incidentType} onChange={(event) => setIncidentType(event.target.value as IncidentType)}>{Object.entries(incidentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></FormField>
