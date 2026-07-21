@@ -98,6 +98,16 @@ it("keeps logistics mutations unavailable without edit-logistics", async () => {
   expect(screen.getByText(/perfil sem permissão para alterar a entrega/i)).toBeVisible();
 });
 
+it("keeps shipment occurrence actions unavailable without edit-logistics", async () => {
+  const user = await renderWithSession(<LogisticsPage />, "finance");
+
+  await user.click(screen.getByRole("button", { name: /ver embarque 3824/i }));
+  const drawer = screen.getByRole("dialog", { name: /embarque 3824/i });
+
+  expect(within(drawer).queryByRole("button", { name: "Confirmar entrega" })).not.toBeInTheDocument();
+  expect(within(drawer).queryByRole("button", { name: "Registrar ocorrência" })).not.toBeInTheDocument();
+});
+
 it("keeps a shipped load in transit after an incident changes the order status", async () => {
   const user = await renderWithSession(<IncidentTransitHarness />);
   await user.click(screen.getByRole("button", { name: /criar ocorrência em trânsito/i }));

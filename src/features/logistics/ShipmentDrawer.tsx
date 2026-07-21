@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Drawer } from "../../components/Drawer";
 import { FormField } from "../../components/FormField";
 import { StatusBadge } from "../../components/StatusBadge";
-import type { ISODate, IncidentPriority, IncidentType, Order, Shipment } from "../../domain/types";
+import type { ISODate, Order, Shipment } from "../../domain/types";
 import { usePrototypeStore } from "../../state/PrototypeStore";
-import { DeliveryForm } from "./DeliveryForm";
+import { ShipmentDeliveryActions } from "./ShipmentDeliveryActions";
 
 interface ShipmentDrawerProps {
   order?: Order;
@@ -23,31 +23,14 @@ const paymentLabels = {
 
 const checkLabels = { pending: "Pendente", matched: "Conferido", divergent: "Com divergência" };
 
-const incidentTypeLabels: Record<IncidentType, string> = {
-  "missing-item": "Item faltante",
-  "wrong-product": "Produto incorreto",
-  "other": "Outra divergência",
-};
-
-const incidentPriorityLabels: Record<IncidentPriority, string> = {
-  low: "Baixa",
-  medium: "Média",
-  high: "Alta",
-};
-
 export function ShipmentDrawer({ order, shipment, open, onClose }: ShipmentDrawerProps) {
-  const { incidents, updateShipment, createIncident } = usePrototypeStore();
+  const { incidents, updateShipment } = usePrototypeStore();
   const [editing, setEditing] = useState(false);
   const [editShippedAt, setEditShippedAt] = useState("");
   const [editInvoice, setEditInvoice] = useState("");
   const [editDriver, setEditDriver] = useState("");
   const [editRoute, setEditRoute] = useState("");
   const [editExpectedAt, setEditExpectedAt] = useState("");
-
-  const [showIncidentForm, setShowIncidentForm] = useState(false);
-  const [incidentType, setIncidentType] = useState<IncidentType>("other");
-  const [incidentPriority, setIncidentPriority] = useState<IncidentPriority>("medium");
-  const [incidentDescription, setIncidentDescription] = useState("");
 
   if (!order || !shipment) return null;
   const title = `Embarque ${order.orderNumber ?? order.id}`;
@@ -75,23 +58,6 @@ export function ShipmentDrawer({ order, shipment, open, onClose }: ShipmentDrawe
       expectedDeliveryAt: (editExpectedAt || undefined) as ISODate | undefined,
     });
     setEditing(false);
-  };
-
-  const submitIncident = () => {
-    createIncident({
-      orderId: order.id,
-      shipmentId: shipment.id,
-      clientName: order.clientName,
-      supplierName: order.supplierName,
-      title: incidentTypeLabels[incidentType],
-      description: incidentDescription,
-      type: incidentType,
-      priority: incidentPriority,
-    });
-    setIncidentType("other");
-    setIncidentPriority("medium");
-    setIncidentDescription("");
-    setShowIncidentForm(false);
   };
 
   return (
@@ -131,18 +97,9 @@ export function ShipmentDrawer({ order, shipment, open, onClose }: ShipmentDrawe
             <div className="order-form__submit"><button type="button" className="button-secondary" onClick={startEdit}>Editar remessa</button></div>
           </>
         )}
-        <DeliveryForm shipment={shipment} />
-
         <section><h4>Ocorrências</h4>
           {orderIncidents.length ? <ul>{orderIncidents.map((inc) => <li key={inc.id}><strong>{inc.title}</strong> · {inc.status}<br />{inc.description}</li>)}</ul> : <p>Nenhuma ocorrência registrada.</p>}
-          {showIncidentForm ? (
-            <div className="order-form">
-              <FormField label="Tipo"><select value={incidentType} onChange={(e) => setIncidentType(e.target.value as IncidentType)}>{Object.entries(incidentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></FormField>
-              <FormField label="Prioridade"><select value={incidentPriority} onChange={(e) => setIncidentPriority(e.target.value as IncidentPriority)}>{Object.entries(incidentPriorityLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></FormField>
-              <FormField label="Descrição"><textarea value={incidentDescription} onChange={(e) => setIncidentDescription(e.target.value)} /></FormField>
-              <div className="order-form__submit"><button className="button-primary" type="button" onClick={submitIncident}>Registrar</button><button className="button-secondary" type="button" onClick={() => setShowIncidentForm(false)}>Cancelar</button></div>
-            </div>
-          ) : <button type="button" className="button-secondary" onClick={() => setShowIncidentForm(true)}>Registrar ocorrência</button>}
+          <ShipmentDeliveryActions order={order} shipment={shipment} />
         </section>
       </div>
     </Drawer>
