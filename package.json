@@ -2,6 +2,7 @@
   "name": "ogura-prototipo",
   "version": "1.0.0",
   "description": "Ogura Rep sales prototype",
+  "packageManager": "pnpm@11.15.1",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
