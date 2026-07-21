@@ -252,7 +252,6 @@ export function OrderDetailPage() {
             <FormField label="Previsão de entrega"><input type="date" value={shipExpectedAt} onChange={(e) => setShipExpectedAt(e.target.value)} /></FormField>
             <div className="order-form__submit"><button className="button-primary" type="button" onClick={saveShipment}>{editShipmentId ? "Salvar" : "Adicionar"}</button><button className="button-secondary" type="button" onClick={() => { setEditing(false); setEditShipmentId(undefined); }}>Cancelar</button></div>
           </div> : canEdit && <div className="order-form__submit"><button type="button" className="button-secondary" onClick={startEditShipment}>Adicionar embarque</button></div>}
-          {orderIncidents.length > 0 && <><h4>Ocorrências na entrega</h4><ul>{orderIncidents.map((incident) => <li key={incident.id}><strong>{incident.title}</strong> · {incident.status}<br />{incident.description}</li>)}</ul></>}
         </article></div>;
       case "Financeiro":
         return <div className="detail-grid detail-grid--full"><article><h3>A receber</h3><DataTable columns={installmentColumns} rows={receivableInstallments} getRowId={(inst) => inst.id} emptyMessage="Nenhum registro." /></article><article><h3>A pagar</h3><DataTable columns={installmentColumns} rows={payableInstallments} getRowId={(inst) => inst.id} emptyMessage="Nenhum registro." /></article></div>;
